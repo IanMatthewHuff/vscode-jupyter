@@ -13,6 +13,7 @@ import { registerTypes as registerApiTypes } from './api/serviceRegistry';
 import { registerTypes as appRegisterTypes } from './application/serviceRegistry';
 import { IApplicationEnvironment, ICommandManager } from './common/application/types';
 import { STANDARD_OUTPUT_CHANNEL, UseProposedApi } from './common/constants';
+import { RemoveKernelToolbarInInteractiveWindow } from './common/experiments/groups';
 import { registerTypes as installerRegisterTypes } from './common/installer/serviceRegistry';
 import { registerTypes as platformRegisterTypes } from './common/platform/serviceRegistry';
 import { IFileSystem } from './common/platform/types';
@@ -20,6 +21,7 @@ import { registerTypes as processRegisterTypes } from './common/process/serviceR
 import { registerTypes as commonRegisterTypes } from './common/serviceRegistry';
 import {
     IConfigurationService,
+    IExperimentService,
     IExperimentsManager,
     IExtensionContext,
     IFeatureDeprecationManager,
@@ -96,6 +98,11 @@ async function activateLegacy(
 
     const abExperiments = serviceContainer.get<IExperimentsManager>(IExperimentsManager);
     await abExperiments.activate();
+
+    // IANHU: To move this, just for testing
+    const expService = serviceContainer.get<IExperimentService>(IExperimentService);
+    const removeKernelToolbar = await expService.inExperiment(RemoveKernelToolbarInInteractiveWindow.experiment);
+    //const vsCodeEditor = expService.
 
     // Register datascience types after experiments have loaded.
     // To ensure we can register types based on experiments.
