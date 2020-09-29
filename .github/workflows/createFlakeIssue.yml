@@ -1,0 +1,11 @@
+name: Create issue from flaky test failure
+
+on:
+  workflow_run:
+    workflows: ["Flaky Tests"]
+    branches: [main]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
