@@ -14,6 +14,7 @@ env:
   CACHE_PIP_DEPS: cache-pip
   CI_PYTHON_PATH: python
   TEST_RESULTS_DIRECTORY: .
+  TEST_RESULTS_GLOB: '**/test-results.xml'
 
 jobs:
   tests:
@@ -117,6 +118,7 @@ jobs:
       # In production, we get debugpy from python extension.
       - name: Install functional test requirements
         run: |
+          python -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements.txt
           python -m pip --disable-pip-version-check install -r build/debugger-install-requirements.txt
           python ./pythonFiles/install_debugpy.py
           python -m pip install numpy
@@ -148,11 +150,22 @@ jobs:
 
       - name: Run functional tests
         run: npm run test:functional
+        id: test_functional
         if: matrix.test-suite == 'functional'
 
       - name: Run functional tests with Jupyter
         run: npm run test:functional
+        id: test_functional_jupyter
         env:
           VSCODE_PYTHON_ROLLING: 1
           VSC_PYTHON_FORCE_LOGGING: 1
         if: matrix.test-suite == 'functional-with-jupyter'
+
+      - name: Publish Test Report
+        uses: scacap/action-surefire-report@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}       
+          report_paths: ${{ env.TEST_RESULTS_GLOB }} 
+          check_name: Functional Test Report
+        if: (steps.test_functional.outcome == 'failure' || steps.test_functional_jupyter.outcome == 'failure') && failure()
+

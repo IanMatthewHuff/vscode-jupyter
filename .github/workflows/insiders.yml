@@ -18,6 +18,7 @@ env:
   VSIX_NAME_UPLOADED_TO_BLOB: ms-ai-tools-jupyter-insiders.vsix
   CI_PYTHON_PATH: python
   TEST_RESULTS_DIRECTORY: .
+  TEST_RESULTS_GLOB: '**/test-results.xml'
 
 jobs:
   build-vsix:
@@ -185,7 +186,16 @@ jobs:
         # if: steps.out-cache.outputs.cache-hit == false
 
       - name: Run TypeScript unit tests
+        id: test_unittests
         run: npm run test:unittests:cover
+
+      - name: Publish Test Report
+        uses: scacap/action-surefire-report@v1
+        if: steps.test_unittests.outcome == 'failure' && failure()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}       
+          report_paths: ${{ env.TEST_RESULTS_GLOB }} 
+          check_name: Ts-Unit Test Report
 
   tests:
     name: Tests (with Python)
@@ -320,15 +330,24 @@ jobs:
 
       - name: Run functional tests
         run: npm run test:functional
+        id: test_functional
         if: matrix.test-suite == 'functional'
 
       - name: Run functional tests with Jupyter
         run: npm run test:functional
+        id: test_functional_jupyter
         env:
           VSCODE_PYTHON_ROLLING: 1
           VSC_PYTHON_FORCE_LOGGING: 1
         if: matrix.test-suite == 'functional-with-jupyter'
 
+      - name: Publish Test Report
+        uses: scacap/action-surefire-report@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}       
+          report_paths: ${{ env.TEST_RESULTS_GLOB }} 
+          check_name: Functional Test Report
+        if: (steps.test_functional.outcome == 'failure' || steps.test_functional_jupyter.outcome == 'failure') && failure()
 
   smoke-tests:
     name: Smoke tests
