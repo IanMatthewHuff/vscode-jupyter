@@ -169,9 +169,9 @@ jobs:
           check_name: Functional Test Report
         if: (steps.test_functional.outcome == 'failure' || steps.test_functional_jupyter.outcome == 'failure') && failure()
 
-       - name: Upload Functional Test Report
-         uses: actions/upload-artifact@v2
-         with:
-           name: test-result-artifact
-           path: ${{ env.TEST_RESULTS_GLOB }}
+      - name: Upload Functional Test Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-result-artifact
+          path: ${{ env.TEST_RESULTS_GLOB }}
 
