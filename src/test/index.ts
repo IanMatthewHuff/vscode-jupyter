@@ -75,7 +75,8 @@ function configure(): SetupOptions {
         invert,
         timeout: TEST_TIMEOUT,
         retries: TEST_RETRYCOUNT,
-        grep,
+        //grep,
+        grep: 'Simple',
         testFilesSuffix,
         // Force Mocha to exit after tests.
         // It has been observed that this isn't sufficient, hence the reason for src/test/common/exitCIAfterTestReporter.ts

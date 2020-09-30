@@ -15,7 +15,7 @@ env:
   CI_PYTHON_PATH: python
   TEST_RESULTS_DIRECTORY: .
   TEST_RESULTS_GLOB: '**/test-results.xml'
-  VSC_JUPYTER_CI_TEST_GREP: Simple
+  VSC_JUPYTER_CI_TEST_GREP: 'Simple'
 
 jobs:
   tests:
@@ -136,24 +136,24 @@ jobs:
         run: npx gulp prePublishNonBundle
         # if: steps.out-cache.outputs.cache-hit == false
 
-      - name: Run Python and IPython unit tests
-        run: |
-          python pythonFiles/tests/run_all.py
-          python -m IPython pythonFiles/tests/run_all.py
-        if: matrix.test-suite == 'python-unit'
+      # - name: Run Python and IPython unit tests
+        # run: |
+          # python pythonFiles/tests/run_all.py
+          # python -m IPython pythonFiles/tests/run_all.py
+        # if: matrix.test-suite == 'python-unit'
 
-      - name: Run single-workspace tests
-        env:
-          CI_PYTHON_VERSION: ${{matrix.python}}
-        uses: GabrielBB/xvfb-action@v1.4
-        with:
-          run: npm run testSingleWorkspace
-        if: matrix.test-suite == 'single-workspace'
+      # - name: Run single-workspace tests
+        # env:
+          # CI_PYTHON_VERSION: ${{matrix.python}}
+        # uses: GabrielBB/xvfb-action@v1.4
+        # with:
+          # run: npm run testSingleWorkspace
+        # if: matrix.test-suite == 'single-workspace'
 
-      - name: Run functional tests
-        run: npm run test:functional
-        id: test_functional
-        if: matrix.test-suite == 'functional'
+      # - name: Run functional tests
+        # run: npm run test:functional
+        # id: test_functional
+        # if: matrix.test-suite == 'functional'
 
       - name: Run functional tests with Jupyter
         run: npm run test:functional
@@ -176,4 +176,5 @@ jobs:
         with:
           name: test-result-artifact
           path: ${{ env.TEST_RESULTS_GLOB }}
+        if: steps.test_functional_jupyter.outcome == 'failure' && failure()
 

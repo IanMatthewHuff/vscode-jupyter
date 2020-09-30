@@ -280,6 +280,7 @@
                 "--recursive",
                 "--colors",
                 // "--grep", "<suite name>",
+                "--grep", "Simple",
                 "--timeout=300000",
                 "--exit"
             ],
