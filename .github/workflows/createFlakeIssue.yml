@@ -9,3 +9,12 @@ on:
   workflow_dispatch:
 
 jobs:
+  createIssue:
+    name: Create issue from functional test failures
+    # if: github.repository == 'microsoft/vscode-jupyter'
+    if: github.repository == 'IanMatthewHuff/vscode-jupyter'
+    steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v2
+        with:
+          name: test-result-artifact

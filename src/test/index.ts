@@ -59,7 +59,7 @@ function configure(): SetupOptions {
     process.env.IS_MULTI_ROOT_TEST = IS_MULTI_ROOT_TEST.toString();
 
     // Check for a grep setting. Might be running a subset of the tests
-    const defaultGrep = process.env.VSC_JUPYTER_CI_TEST_GREP;
+    //const defaultGrep = process.env.VSC_JUPYTER_CI_TEST_GREP;
     // Check whether to invert the grep (i.e. test everything that doesn't include the grep).
     const invert = (process.env.VSC_JUPYTER_CI_TEST_INVERT_GREP || '').length > 0;
 
@@ -76,7 +76,8 @@ function configure(): SetupOptions {
         timeout: TEST_TIMEOUT,
         retries: TEST_RETRYCOUNT,
         //grep,
-        grep: defaultGrep || 'Simple',
+        //grep: defaultGrep || 'Simple',
+        grep: 'Simple',
         testFilesSuffix,
         // Force Mocha to exit after tests.
         // It has been observed that this isn't sufficient, hence the reason for src/test/common/exitCIAfterTestReporter.ts
