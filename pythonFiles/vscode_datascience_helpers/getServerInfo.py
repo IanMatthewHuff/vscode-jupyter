@@ -28,6 +28,7 @@ except Exception:
     flagging for execution of partial path is also not correct as it is a command, not a path"""
     import subprocess  # nosec
     import sys
+    import os
 
     result = subprocess.run(  # nosec
         ["jupyter", "notebook", "list", "--jsonlist"], capture_output=True

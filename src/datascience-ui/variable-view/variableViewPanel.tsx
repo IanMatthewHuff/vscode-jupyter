@@ -8,31 +8,32 @@ import * as React from 'react';
 import { SharedMessages } from '../../client/datascience/messages';
 import { IJupyterExtraSettings } from '../../client/datascience/types';
 import { IVariableViewMapping, VariableViewMessages } from '../../client/datascience/variablesView/types';
+import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
 import { storeLocStrings } from '../react-common/locReactSide';
 import { IMessageHandler, PostOffice } from '../react-common/postOffice';
 import { getDefaultSettings } from '../react-common/settingsReactSide';
 import { StyleInjector } from '../react-common/styleInjector';
 
 // Our css has to come after in order to override body styles
-export interface IVariablePanelProps {
+export interface IVariableViewPanelProps {
     skipDefault?: boolean;
     baseTheme: string;
     testMode?: boolean;
 }
 
 //tslint:disable:no-any
-interface IVariablePanelState {
+interface IVariableViewPanelState {
     forceDark?: boolean;
     settings?: IJupyterExtraSettings;
 }
 
-export class VariablePanel extends React.Component<IVariablePanelProps, IVariablePanelState>
+export class VariableViewPanel extends React.Component<IVariableViewPanelProps, IVariableViewPanelState>
     implements IMessageHandler {
     private container: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     private postOffice: PostOffice = new PostOffice();
 
     // tslint:disable-next-line:max-func-body-length
-    constructor(props: IVariablePanelProps, _state: IVariablePanelState) {
+    constructor(props: IVariableViewPanelProps, _state: IVariableViewPanelState) {
         super(props);
 
         this.state = {
@@ -63,7 +64,6 @@ export class VariablePanel extends React.Component<IVariablePanelProps, IVariabl
                         darkChanged={this.darkChanged}
                         postOffice={this.postOffice}
                     />
-                    <h1>VARIABLES</h1>
                 </div>
             );
         } else {

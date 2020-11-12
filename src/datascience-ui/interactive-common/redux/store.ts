@@ -294,7 +294,7 @@ function getDebugState(vms: ICellViewModel[]): DebugState {
     return firstNonDesign ? firstNonDesign.runningByLine : DebugState.Design;
 }
 
-function createMiddleWare(testMode: boolean, postOffice: PostOffice): Redux.Middleware<{}, IStore>[] {
+export function createMiddleWare(testMode: boolean, postOffice: PostOffice): Redux.Middleware<{}, IStore>[] {
     // Create the middleware that modifies actions to queue new actions
     const queueableActions = createQueueableActionMiddleware();
 
@@ -381,7 +381,7 @@ export interface IMainWithVariables extends IMainState {
 /**
  * Middleware that will ensure all actions have `messageDirection` property.
  */
-const addMessageDirectionMiddleware: Redux.Middleware = (_store) => (next) => (action: Redux.AnyAction) => {
+export const addMessageDirectionMiddleware: Redux.Middleware = (_store) => (next) => (action: Redux.AnyAction) => {
     if (isAllowedAction(action)) {
         // Ensure all dispatched messages have been flagged as `incoming`.
         const payload: BaseReduxActionPayload<{}> = action.payload || {};
