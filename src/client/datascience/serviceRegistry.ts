@@ -44,7 +44,7 @@ import { ExportToHTML } from './export/exportToHTML';
 import { ExportToPDF } from './export/exportToPDF';
 import { ExportToPython } from './export/exportToPython';
 import { ExportUtil } from './export/exportUtil';
-import { ExportFormat, IExport, IExportDialog, IExportManager } from './export/types';
+import { ExportFormat, IExport, IExport2, IExportDialog, IExportManager, IPythonScriptExporter } from './export/types';
 import { NotebookProvider } from './interactive-common/notebookProvider';
 import { NotebookServerProvider } from './interactive-common/notebookServerProvider';
 import { NotebookUsageTracker } from './interactive-common/notebookUsageTracker';
@@ -164,6 +164,8 @@ import { HostJupyterServer } from './jupyter/liveshare/hostJupyterServer';
 import { HostRawNotebookProvider } from './raw-kernel/liveshare/hostRawNotebookProvider';
 import { KernelCommandListener } from './jupyter/kernels/kernelCommandListener';
 import { CellHashProviderFactory } from './editor-integration/cellHashProviderFactory';
+import { ExportToPython2 } from './export/exportToPython2';
+import { PythonScriptExporter } from './export/pythonScriptExporter';
 
 // README: Did you make sure "dataScienceIocContainer.ts" has also been updated appropriately?
 
@@ -284,8 +286,10 @@ export function registerTypes(serviceManager: IServiceManager, inNotebookApiExpe
     serviceManager.addSingleton<IExport>(IExport, ExportToHTML, ExportFormat.html);
     serviceManager.addSingleton<IExport>(IExport, ExportToPython, ExportFormat.python);
     serviceManager.addSingleton<IExport>(IExport, ExportBase, 'Export Base');
+    serviceManager.addSingleton<IExport2>(IExport2, ExportToPython2, ExportFormat.python2);
     serviceManager.addSingleton<ExportUtil>(ExportUtil, ExportUtil);
     serviceManager.addSingleton<ExportCommands>(ExportCommands, ExportCommands);
+    serviceManager.addSingleton<IPythonScriptExporter>(IPythonScriptExporter, PythonScriptExporter);
     serviceManager.addSingleton<IExportDialog>(IExportDialog, ExportDialog);
     serviceManager.addSingleton<IJupyterUriProviderRegistration>(IJupyterUriProviderRegistration, JupyterUriProviderRegistration);
     serviceManager.addSingleton<IFileSystemPathUtils>(IFileSystemPathUtils, FileSystemPathUtils);

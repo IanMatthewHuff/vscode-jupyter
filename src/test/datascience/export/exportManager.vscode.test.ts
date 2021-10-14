@@ -12,12 +12,13 @@ import { ExportFileOpener } from '../../../client/datascience/export/exportFileO
 import { ExportInterpreterFinder } from '../../../client/datascience/export/exportInterpreterFinder';
 import { ExportManager } from '../../../client/datascience/export/exportManager';
 import { ExportUtil } from '../../../client/datascience/export/exportUtil';
-import { ExportFormat, IExport, IExportDialog } from '../../../client/datascience/export/types';
+import { ExportFormat, IExport, IExport2, IExportDialog } from '../../../client/datascience/export/types';
 import { ProgressReporter } from '../../../client/datascience/progress/progressReporter';
 
 suite('DataScience - Export Manager', () => {
     let exporter: ExportManager;
     let exportPython: IExport;
+    let exportPython2: IExport2;
     let exportHtml: IExport;
     let exportPdf: IExport;
     let fileSystem: IFileSystem;
@@ -32,6 +33,7 @@ suite('DataScience - Export Manager', () => {
         filePicker = mock<IExportDialog>();
         fileSystem = mock<IFileSystem>();
         exportPython = mock<IExport>();
+        exportPython2 = mock<IExport2>();
         exportHtml = mock<IExport>();
         exportPdf = mock<IExport>();
         appShell = mock<IApplicationShell>();
@@ -58,6 +60,7 @@ suite('DataScience - Export Manager', () => {
             instance(exportPdf),
             instance(exportHtml),
             instance(exportPython),
+            instance(exportPython2),
             instance(fileSystem),
             instance(filePicker),
             instance(reporter),

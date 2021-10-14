@@ -20,7 +20,7 @@ export class ExportFileOpener {
     ) {}
 
     public async openFile(format: ExportFormat, uri: Uri) {
-        if (format === ExportFormat.python) {
+        if (format === ExportFormat.python || format === ExportFormat.python2) {
             await this.openPythonFile(uri);
             sendTelemetryEvent(Telemetry.ExportNotebookAs, undefined, {
                 format: format,

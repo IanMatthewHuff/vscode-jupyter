@@ -2,7 +2,7 @@ import { inject, injectable, named } from 'inversify';
 import * as path from 'path';
 import { CancellationToken, Uri } from 'vscode';
 import { IApplicationShell } from '../../common/application/types';
-import { traceError } from '../../common/logger';
+import { traceError, traceInfo } from '../../common/logger';
 import { IFileSystem, TemporaryDirectory } from '../../common/platform/types';
 import * as localize from '../../common/utils/localize';
 import { PythonEnvironment } from '../../pythonEnvironments/info';
@@ -12,7 +12,7 @@ import { ProgressReporter } from '../progress/progressReporter';
 import { ExportFileOpener } from './exportFileOpener';
 import { ExportInterpreterFinder } from './exportInterpreterFinder';
 import { ExportUtil } from './exportUtil';
-import { ExportFormat, IExport, IExportDialog, IExportManager } from './types';
+import { ExportFormat, IExport, IExport2, IExportDialog, IExportManager } from './types';
 
 @injectable()
 export class ExportManager implements IExportManager {
@@ -20,6 +20,7 @@ export class ExportManager implements IExportManager {
         @inject(IExport) @named(ExportFormat.pdf) private readonly exportToPDF: IExport,
         @inject(IExport) @named(ExportFormat.html) private readonly exportToHTML: IExport,
         @inject(IExport) @named(ExportFormat.python) private readonly exportToPython: IExport,
+        @inject(IExport2) @named(ExportFormat.python2) private readonly exportToPython2: IExport2,
         @inject(IFileSystem) private readonly fs: IFileSystem,
         @inject(IExportDialog) private readonly filePicker: IExportDialog,
         @inject(ProgressReporter) private readonly progressReporter: ProgressReporter,
@@ -38,16 +39,17 @@ export class ExportManager implements IExportManager {
     ): Promise<undefined> {
         let target;
         try {
-            // Get the interpreter to use for the export, checking the candidate interpreter first
-            const exportInterpreter = await this.exportInterpreterFinder.getExportInterpreter(
-                format,
-                candidateInterpreter
-            );
             target = await this.getTargetFile(format, source, defaultFileName);
             if (!target) {
                 return;
             }
-            await this.performExport(format, contents, target, exportInterpreter);
+
+            // IANHU: This should be wrapped somewhere else, setting?
+            if (format === ExportFormat.python) {
+                format = ExportFormat.python2;
+            }
+
+            await this.performExport(format, contents, target, candidateInterpreter);
         } catch (e) {
             traceError('Export failed', e);
             sendTelemetryEvent(Telemetry.ExportNotebookAsFailed, undefined, { format: format });
@@ -60,7 +62,12 @@ export class ExportManager implements IExportManager {
         }
     }
 
-    private async performExport(format: ExportFormat, contents: string, target: Uri, interpreter: PythonEnvironment) {
+    private async performExport(
+        format: ExportFormat,
+        contents: string,
+        target: Uri,
+        candidateInterpreter?: PythonEnvironment
+    ) {
         /* Need to make a temp directory here, instead of just a temp file. This is because
            we need to store the contents of the notebook in a file that is named the same
            as what we want the title of the exported file to be. To ensure this file path will be unique
@@ -71,7 +78,7 @@ export class ExportManager implements IExportManager {
 
         const reporter = this.progressReporter.createProgressIndicator(`Exporting to ${format}`, true);
         try {
-            await this.exportToFormat(source, target, format, interpreter, reporter.token);
+            await this.exportToFormat(source, target, format, reporter.token, candidateInterpreter);
         } finally {
             tempDir.dispose();
             reporter.dispose();
@@ -109,6 +116,36 @@ export class ExportManager implements IExportManager {
     }
 
     private async exportToFormat(
+        source: Uri,
+        target: Uri,
+        format: ExportFormat,
+        cancelToken: CancellationToken,
+        candidateInterpreter?: PythonEnvironment
+    ) {
+        switch (format) {
+            case ExportFormat.pdf:
+            case ExportFormat.python:
+            case ExportFormat.html:
+                // Get the interpreter to use for the export, checking the candidate interpreter first
+                const exportInterpreter = await this.exportInterpreterFinder.getExportInterpreter(
+                    format,
+                    candidateInterpreter
+                );
+                // IANHU return?
+                await this.nbConvertExportToFormat(source, target, format, exportInterpreter, cancelToken);
+                break;
+
+            case ExportFormat.python2:
+                await this.exportToPython2.export(source, target, cancelToken);
+                break;
+
+            default:
+                traceInfo('Unknown ExportFormat passed to Export Manager');
+                break;
+        }
+    }
+
+    private async nbConvertExportToFormat(
         source: Uri,
         target: Uri,
         format: ExportFormat,
