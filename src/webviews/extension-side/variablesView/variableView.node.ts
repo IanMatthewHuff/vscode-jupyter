@@ -149,10 +149,11 @@ export class VariableView extends WebviewViewHost<IVariableViewPanelMapping> imp
                 this.postMessage(InteractiveWindowMessages.UpdateVariableViewExecutionCount, {
                     executionCount: this.notebookWatcher.activeNotebookExecutionCount
                 }).ignoreErrors();
-            } else {
-                // No active view, so just trigger refresh to clear
-                this.postMessage(InteractiveWindowMessages.ForceVariableRefresh).ignoreErrors();
             }
+            // } else {
+            // No active view, so just trigger refresh to clear
+            this.postMessage(InteractiveWindowMessages.ForceVariableRefresh).ignoreErrors();
+            // }
         }
     }
 

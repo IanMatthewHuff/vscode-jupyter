@@ -51,6 +51,7 @@ type VariableReducerArg<T = never | undefined> = ReducerArg<
 >;
 
 function handleRequest(arg: VariableReducerArg<IJupyterVariablesRequest>): IVariableState {
+    console.log(`IANHUZ handleRequest`);
     const newExecutionCount =
         arg.payload.data.executionCount !== undefined
             ? arg.payload.data.executionCount
@@ -311,6 +312,9 @@ function handleFinishCell(arg: VariableReducerArg<IFinishCell>): IVariableState 
 }
 
 function handleRefresh(arg: VariableReducerArg): IVariableState {
+    console.log(
+        `IANHUZ handleRefresh visible: ${arg.prevState.visible} refreshCount: ${arg.prevState.refreshCount} currentExecutionCount: ${arg.prevState.currentExecutionCount}`
+    );
     // If the variables are visible, refresh them
     if (arg.prevState.visible) {
         return handleRequest({
