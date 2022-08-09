@@ -28,6 +28,7 @@ import { IExtensionContext } from '../platform/common/types';
 import { registerTypes as registerDevToolTypes } from './devTools/serviceRegistry';
 import { registerTypes as registerIntellisenseTypes } from './intellisense/serviceRegistry.node';
 import { PythonExtensionRestartNotification } from './notification/pythonExtensionRestartNotification';
+import { EnvironmentCreateCommand } from './envCreation/envCreateCommand';
 
 export function registerTypes(context: IExtensionContext, serviceManager: IServiceManager, isDevMode: boolean) {
     serviceManager.addSingleton<IExtensionSingleActivationService>(IExtensionSingleActivationService, GlobalActivation);
@@ -84,4 +85,10 @@ export function registerTypes(context: IExtensionContext, serviceManager: IServi
 
     // Dev Tools
     registerDevToolTypes(context, serviceManager, isDevMode);
+
+    // Environment Creation
+    serviceManager.addSingleton<IExtensionSingleActivationService>(
+        IExtensionSingleActivationService,
+        EnvironmentCreateCommand
+    );
 }

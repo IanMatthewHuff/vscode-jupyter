@@ -848,6 +848,10 @@
                 "title": "%DataScience.installPythonTitle%"
             },
             {
+                "command": "jupyter.environmentCreateCommand",
+                "title": "Create Environment"
+            },
+            {
                 "command": "jupyter.switchToLocalKernels",
                 "title": "%DataScience.switchToLocalKernelsTitle%"
             },
@@ -1021,6 +1025,10 @@
                     "when": "jupyter.showInstallPythonCommand"
                 },
                 {
+                    "command": "jupyter.environmentCreateCommand",
+                    "when": "jupyter.showEnvironmentCreateCommand"
+                },
+                {
                     "command": "jupyter.switchToLocalKernels",
                     "when": "jupyter.showingRemoteNotWeb"
                 },
@@ -1111,6 +1119,10 @@
                 },
                 {
                     "command": "jupyter.installPythonViaKernelPicker",
+                    "when": "false"
+                },
+                {
+                    "command": "jupyter.environmentCreateCommand",
                     "when": "false"
                 },
                 {
