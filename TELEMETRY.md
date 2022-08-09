@@ -939,7 +939,7 @@ No properties for event
 
 [src/kernels/telemetry/sendKernelTelemetryEvent.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/telemetry/sendKernelTelemetryEvent.ts)
 ```typescript
-    stopWatch?: StopWatch,
+    handleError: boolean,
     properties?: P[E] & { [waitBeforeSending]?: Promise<void> }
 ) {
     if (eventName === Telemetry.ExecuteCell) {
@@ -2865,7 +2865,7 @@ No properties for event
             () => this.postStartRawSession(options, process)
         );
         if (options.purpose === 'restart') {
-            sendKernelTelemetryWhenDone(this.resource, Telemetry.NotebookRestart, promise, stopWatch, {
+            sendKernelTelemetryWhenDone(this.resource, Telemetry.NotebookRestart, promise, false, {
                 startTimeOnly: true
             });
         }
@@ -2960,6 +2960,18 @@ function incrementStartFailureCount(resource: Resource, eventName: any, properti
 ```
 
 
+[src/kernels/errors/kernelErrorHandler.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/errors/kernelErrorHandler.ts)
+```typescript
+        }
+        this.handledKernelErrors.add(err);
+        if (errorContext === 'start') {
+            sendKernelTelemetryWhenDone(resource, Telemetry.NotebookStart, Promise.reject(err), true, {
+                disableUI: false,
+                failureCategory
+            });
+```
+
+
 [src/kernels/jupyter/launcher/notebookProvider.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/jupyter/launcher/notebookProvider.ts)
 ```typescript
 
@@ -2967,7 +2979,7 @@ function incrementStartFailureCount(resource: Resource, eventName: any, properti
             options.resource,
             Telemetry.NotebookStart,
             promise || Promise.resolve(undefined),
-            undefined,
+            false, // Error telemetry will be sent further up the chain, after we have analyzed the error, such as if dependencies are installed or not.
             {
 ```
 
@@ -6039,13 +6051,13 @@ No properties for event
 
 [src/platform/api/pythonApi.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/platform/api/pythonApi.ts)
 ```typescript
-        return this.didChangeInterpreters.event;
-    }
-
-    @captureTelemetry(Telemetry.InterpreterListingPerf)
-    @traceDecoratorVerbose('Get Interpreters', TraceOptions.Arguments | TraceOptions.BeforeCall)
-    public getInterpreters(resource?: Uri): Promise<PythonEnvironment[]> {
-        this.hookupOnDidChangeInterpreterEvent();
+        if (!this.interpreterListCachePromise) {
+            this.interpreterListCachePromise = this.getInterpretersImpl(resource);
+        }
+        sendTelemetryWhenDone(Telemetry.InterpreterListingPerf, this.interpreterListCachePromise, undefined, {
+            firstTime
+        });
+        return this.interpreterListCachePromise;
 ```
 
 </details>
@@ -6922,13 +6934,13 @@ No properties for event
 
 [src/kernels/raw/launcher/kernelLauncher.node.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/raw/launcher/kernelLauncher.node.ts)
 ```typescript
-            // Should be available now, wait with a timeout
-            return await this.launchProcess(kernelConnectionMetadata, resource, workingDirectory, timeout, cancelToken);
         })();
-        sendKernelTelemetryWhenDone(resource, Telemetry.KernelLauncherPerf, promise);
-        return promise;
-    }
-
+        sendKernelTelemetryWhenDone(
+            resource,
+            Telemetry.KernelLauncherPerf,
+            promise,
+            false /* No need to send telemetry for kernel launch failures, that's sent elsewhere */
+        );
 ```
 
 </details>
@@ -8197,18 +8209,6 @@ No properties for event
 
 [src/kernels/raw/session/rawJupyterSession.node.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/raw/session/rawJupyterSession.node.ts)
 ```typescript
-            } else if (error instanceof TimedOutError) {
-                sendKernelTelemetryEvent(
-                    this.resource,
-                    Telemetry.RawKernelSessionStart,
-                    stopWatch.elapsedTime,
-                    undefined,
-                    error
-```
-
-
-[src/kernels/raw/session/rawJupyterSession.node.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/raw/session/rawJupyterSession.node.ts)
-```typescript
                 // Send our telemetry event with the error included
                 sendKernelTelemetryEvent(
                     this.resource,
@@ -8291,16 +8291,7 @@ No properties for event
 
 ## Locations Used
 
-[src/kernels/raw/session/rawJupyterSession.node.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/raw/session/rawJupyterSession.node.ts)
-```typescript
-                    undefined,
-                    error
-                );
-                sendKernelTelemetryEvent(this.resource, Telemetry.RawKernelSessionStartTimeout);
-                traceError('Raw session failed to start in given timeout');
-                throw error;
-            } else {
-```
+Event can be removed. Not referenced anywhere
 
 </details>
 <details>
@@ -8327,7 +8318,7 @@ No properties for event
                 sendKernelTelemetryEvent(this.resource, Telemetry.RawKernelSessionStartUserCancel);
                 traceVerbose('Starting of raw session cancelled by user');
                 throw error;
-            } else if (error instanceof TimedOutError) {
+            } else {
 ```
 
 </details>

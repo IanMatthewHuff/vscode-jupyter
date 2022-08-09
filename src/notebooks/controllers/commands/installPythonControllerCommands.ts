@@ -110,7 +110,7 @@ export class InstallPythonControllerCommands implements IExtensionSingleActivati
 
                 if (!this.foundPythonConnections) {
                     // Extension is installed, but we didn't find any python connections
-                    // recommend installing python in this case
+                    // recommended installing python in this case
                     await this.showInstallPythonExtensionContext.set(false);
                     await this.showInstallPythonContext.set(true);
                     return;
