@@ -1782,16 +1782,7 @@ No properties for event
 
 ## Locations Used
 
-[src/notebooks/controllers/kernelFilter/kernelFilterService.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/notebooks/controllers/kernelFilter/kernelFilterService.ts)
-```typescript
-        });
-
-        if (hidden) {
-            sendTelemetryEvent(Telemetry.JupyterKernelHiddenViaFilter);
-        }
-        return hidden;
-    }
-```
+Event can be removed. Not referenced anywhere
 
 </details>
 <details>

@@ -4,6 +4,8 @@
 import { inject, injectable } from 'inversify';
 import { NotebookEditor, window } from 'vscode';
 import { isPythonKernelConnection } from '../../kernels/helpers';
+import { IInstaller } from '../../kernels/installer/types';
+import { IKernelDependencyService } from '../../kernels/types';
 import { IControllerLoader, IControllerRegistration } from '../../notebooks/controllers/types';
 import { IExtensionSingleActivationService } from '../../platform/activation/types';
 import { IApplicationShell, ICommandManager } from '../../platform/common/application/types';
@@ -31,7 +33,9 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
         @inject(IControllerLoader) private readonly controllerLoader: IControllerLoader,
         @inject(IControllerRegistration) private readonly controllerRegistration: IControllerRegistration,
         @inject(IInterpreterService) private readonly interpreterService: IInterpreterService,
-        @inject(IProcessServiceFactory) private readonly processServiceFactory: IProcessServiceFactory
+        @inject(IProcessServiceFactory) private readonly processServiceFactory: IProcessServiceFactory,
+        @inject(IKernelDependencyService) private readonly kernelDependencyService: IKernelDependencyService,
+        @inject(IInstaller) private readonly installer: IInstaller
     ) {
         // Context keys to control when these commands are shown
         this.showEnvironmentCreateCommand = new ContextKey('jupyter.showEnvironmentCreateCommand', this.commandManager);
@@ -47,7 +51,9 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
                 this.interpreterService,
                 this.appShell,
                 this.processServiceFactory,
-                this.controllerRegistration
+                this.controllerRegistration,
+                this.kernelDependencyService,
+                this.installer
             )
         );
     }
