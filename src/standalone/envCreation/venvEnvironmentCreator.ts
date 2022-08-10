@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 'use strict';
 
-import path from 'path';
+import * as path from '../../platform/vscode-path/path';
 import { QuickPickItem, Uri, workspace } from 'vscode';
 import { createInterpreterKernelSpec, getKernelId } from '../../kernels/helpers';
 import { KernelConnectionMetadata } from '../../kernels/types';
@@ -88,7 +88,8 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
     }
 
     private async registerController(workspaceDir: string) {
-        const pythonUri = Uri.file(path.join(workspaceDir, '.venv', 'bin', 'python'));
+        const pythonPath = path.join(workspaceDir, '.venv', 'bin', 'python');
+        const pythonUri = Uri.file(pythonPath);
         const interpreter = await this.interpreterService.getInterpreterDetails(pythonUri);
 
         if (!interpreter) {

@@ -43,7 +43,12 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
 
         // IANHU: This should probably end up as a multi-inject, just do this for now
         this.environmentCreators.push(
-            new VenvEnvironmentCreator(this.interpreterService, this.appShell, this.processServiceFactory)
+            new VenvEnvironmentCreator(
+                this.interpreterService,
+                this.appShell,
+                this.processServiceFactory,
+                this.controllerRegistration
+            )
         );
     }
 
