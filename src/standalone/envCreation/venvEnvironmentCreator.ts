@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 'use strict';
 
-import { QuickPickItem } from 'vscode';
+import { QuickPickItem, workspace } from 'vscode';
 import { KernelConnectionMetadata } from '../../kernels/types';
 import { IApplicationShell } from '../../platform/common/application/types';
 import { IProcessServiceFactory } from '../../platform/common/process/types.node';
@@ -60,7 +60,11 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
         // IANHU: Pass in the resource here as activenotebook? Or not needed?
         const processService = await this.processServiceFactory.create(undefined);
 
-        const output = await processService.exec(interpreter.uri.fsPath, ['-m', 'venv .venv'], {
+        // IANHU: This is a bit naieve and not correct for multi root
+        const workspaceDir = workspace.workspaceFolders?.[0];
+
+        const output = await processService.exec(interpreter.uri.fsPath, ['-m', 'venv', '.venv'], {
+            cwd: workspaceDir?.uri.fsPath,
             throwOnStdErr: false,
             mergeStdOutErr: true
         });
