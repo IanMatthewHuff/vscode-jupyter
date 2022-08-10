@@ -2,9 +2,13 @@
 // Licensed under the MIT License.
 'use strict';
 
-import { QuickPickItem, workspace } from 'vscode';
+import path from 'path';
+import { QuickPickItem, Uri, workspace } from 'vscode';
+import { createInterpreterKernelSpec, getKernelId } from '../../kernels/helpers';
 import { KernelConnectionMetadata } from '../../kernels/types';
+import { IControllerRegistration } from '../../notebooks/controllers/types';
 import { IApplicationShell } from '../../platform/common/application/types';
+import { InteractiveWindowView, JupyterNotebookView } from '../../platform/common/constants';
 import { IProcessServiceFactory } from '../../platform/common/process/types.node';
 import { IInterpreterService } from '../../platform/interpreter/contracts';
 import { traceInfo } from '../../platform/logging';
@@ -19,7 +23,8 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
     constructor(
         private readonly interpreterService: IInterpreterService,
         private readonly applicationShell: IApplicationShell,
-        private readonly processServiceFactory: IProcessServiceFactory
+        private readonly processServiceFactory: IProcessServiceFactory,
+        private readonly controllerRegistration: IControllerRegistration
     ) {}
 
     public available(): boolean {
@@ -61,20 +66,45 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
         const processService = await this.processServiceFactory.create(undefined);
 
         // IANHU: This is a bit naieve and not correct for multi root
-        const workspaceDir = workspace.workspaceFolders?.[0];
+        const workspaceDir = workspace.workspaceFolders?.[0].uri.fsPath;
+
+        if (!workspaceDir) {
+            return;
+            // THROW?
+        }
 
         const output = await processService.exec(interpreter.uri.fsPath, ['-m', 'venv', '.venv'], {
-            cwd: workspaceDir?.uri.fsPath,
+            cwd: workspaceDir,
             throwOnStdErr: false,
             mergeStdOutErr: true
         });
 
+        // IANHU: Error handling. Looks like we get '' for a correct generation, also can check
+        // to make sure the file is there
         traceInfo(output.stdout);
-        // const output = await processService.exec('jupyter', [frontEnd, '--version'], {
-        // env,
-        // throwOnStdErr: false,
-        // mergeStdOutErr: true
-        // });
+
+        // Now register a controller off of the created venv
+        await this.registerController(workspaceDir);
+    }
+
+    private async registerController(workspaceDir: string) {
+        const pythonUri = Uri.file(path.join(workspaceDir, '.venv', 'bin', 'python'));
+        const interpreter = await this.interpreterService.getInterpreterDetails(pythonUri);
+
+        if (!interpreter) {
+            // IANHU: Failure case here
+            return;
+        }
+
+        const kernelSpec = createInterpreterKernelSpec(interpreter);
+        const id = getKernelId(kernelSpec, interpreter);
+        const connectionMetadata: KernelConnectionMetadata = {
+            kind: 'startUsingPythonInterpreter',
+            kernelSpec,
+            interpreter,
+            id
+        };
+        this.controllerRegistration.add(connectionMetadata, [JupyterNotebookView, InteractiveWindowView]);
     }
 }
 
