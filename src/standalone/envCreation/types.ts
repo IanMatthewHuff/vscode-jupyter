@@ -12,4 +12,8 @@ export interface IEnvironmentCreator {
     hasWorkspaceLocalControllers(kernelConnectionMetadata: KernelConnectionMetadata[]): boolean;
     // Create an environment
     create(): Promise<void>;
+    // Unique ID for this creator
+    id: string;
+    // Display name for this creator
+    displayName: string;
 }

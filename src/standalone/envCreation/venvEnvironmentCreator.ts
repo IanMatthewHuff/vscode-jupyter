@@ -32,6 +32,9 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
         private readonly installer: IInstaller
     ) {}
 
+    public readonly id: string = 'VenvEnvironmentCreator';
+    public readonly displayName: string = 'Venv';
+
     // Basic logic, a python interpreter exists which has pip and venv
     public async available(): Promise<boolean> {
         // IANHU: Note for now we just calculate this once, probably not the long term solution
@@ -79,7 +82,9 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
                 return { label: interpreter.displayName || 'Missing Display Name', interpreter: interpreter };
             });
 
-            const interpreterSelected = await this.applicationShell.showQuickPick(quickPickInterpreters);
+            const interpreterSelected = await this.applicationShell.showQuickPick(quickPickInterpreters, {
+                title: 'Select interpreter to create venv with'
+            });
 
             if (interpreterSelected) {
                 return interpreterSelected.interpreter;
@@ -91,6 +96,7 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
 
             return interpreterList[interpreterList.length - 1];
         }
+        // IANHU: this should actually verify with the pip / venv check
     }
 
     // IANHU: Lifted from python team

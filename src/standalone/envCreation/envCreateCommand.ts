@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 'use strict';
-import { inject, injectable } from 'inversify';
-import { NotebookEditor, window } from 'vscode';
+import { inject, injectable, named } from 'inversify';
+import { Memento, NotebookEditor, QuickPickItem, window } from 'vscode';
 import { isPythonKernelConnection } from '../../kernels/helpers';
 import { IInstaller } from '../../kernels/installer/types';
 import { IKernelDependencyService } from '../../kernels/types';
@@ -12,10 +12,16 @@ import { IApplicationShell, ICommandManager } from '../../platform/common/applic
 import { Commands } from '../../platform/common/constants';
 import { ContextKey } from '../../platform/common/contextKey';
 import { IProcessServiceFactory } from '../../platform/common/process/types.node';
-import { IDisposableRegistry } from '../../platform/common/types';
+import { IDisposableRegistry, IMemento, WORKSPACE_MEMENTO } from '../../platform/common/types';
+import { IMultiStepInputFactory } from '../../platform/common/utils/multiStepInput';
 import { IInterpreterService } from '../../platform/interpreter/contracts';
+import { CondaEnvironmentCreator } from './condaEnvironmentCreator';
 import { IEnvironmentCreator } from './types';
 import { VenvEnvironmentCreator } from './venvEnvironmentCreator';
+
+interface ICreatorQuickPickItem extends QuickPickItem {
+    creator: IEnvironmentCreator;
+}
 
 // This class owns the command to create a local environment for kernel execution when there is not one available
 // 1. Is there currently a locally scoped controller for the given file?
@@ -36,7 +42,8 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
         @inject(IInterpreterService) private readonly interpreterService: IInterpreterService,
         @inject(IProcessServiceFactory) private readonly processServiceFactory: IProcessServiceFactory,
         @inject(IKernelDependencyService) private readonly kernelDependencyService: IKernelDependencyService,
-        @inject(IInstaller) private readonly installer: IInstaller
+        @inject(IInstaller) private readonly installer: IInstaller,
+        @inject(IMemento) @named(WORKSPACE_MEMENTO) private readonly workspaceMemento: Memento
     ) {
         // Context keys to control when these commands are shown
         this.showEnvironmentCreateCommand = new ContextKey('jupyter.showEnvironmentCreateCommand', this.commandManager);
@@ -55,6 +62,14 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
                 this.controllerRegistration,
                 this.kernelDependencyService,
                 this.installer
+            ),
+            new CondaEnvironmentCreator(
+                this.interpreterService,
+                this.processServiceFactory,
+                this.workspaceMemento,
+                this.appShell,
+                this.controllerRegistration,
+                this.controllerLoader
             )
         );
     }
@@ -69,11 +84,33 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
     }
 
     private async createEnvironment(): Promise<void> {
-        // IANHU: Bit of a pickle here, if multiple env creators are available which do we pick?
-        // We could surface a user choice or a setting for pref. For now, just use the first
-        if (this.environmentCreators.length > 0) {
-            await this.environmentCreators[0].create();
+        const selectedCreator = await this.selectCreator();
+
+        if (selectedCreator) {
+            await selectedCreator.create();
         }
+    }
+
+    // In cases where multiple creators are available, pick one
+    private async selectCreator(): Promise<IEnvironmentCreator | undefined> {
+        const availableCreators = this.environmentCreators.filter(async (creator) => {
+            const avail = await creator.available();
+            return avail;
+        });
+
+        const quickPickCreators: ICreatorQuickPickItem[] = availableCreators.map((creator) => {
+            return { label: creator.displayName, creator };
+        });
+
+        const creatorSelected = await this.appShell.showQuickPick(quickPickCreators, {
+            title: 'Select Environment Creator To Use:'
+        });
+
+        if (creatorSelected) {
+            return creatorSelected.creator;
+        }
+
+        return undefined;
     }
 
     // When the active notebook changes, we need to check to see if we should show the command

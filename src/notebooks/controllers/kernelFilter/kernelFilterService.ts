@@ -33,39 +33,39 @@ export class KernelFilterService implements IDisposable {
         this._onDidChange.dispose();
         disposeAllDisposables(this.disposables);
     }
+    // public isKernelHidden(kernelConnection: KernelConnectionMetadata): boolean {
+    // if (
+    // kernelConnection.kind === 'startUsingPythonInterpreter' &&
+    // kernelConnection.interpreter.envType === EnvironmentType.Venv
+    // ) {
+    // return false;
+    // }
+    // return true;
+    // }
+    // IANHU: Just for testing
     public isKernelHidden(kernelConnection: KernelConnectionMetadata): boolean {
-        if (
-            kernelConnection.kind === 'startUsingPythonInterpreter' &&
-            kernelConnection.interpreter.envType === EnvironmentType.Venv
-        ) {
+        const hiddenList = this.getFilters();
+        if (kernelConnection.kind === 'connectToLiveRemoteKernel') {
             return false;
         }
-        return true;
-    }
-    // IANHU: Just for testing
-    // public isKernelHidden(kernelConnection: KernelConnectionMetadata): boolean {
-    // const hiddenList = this.getFilters();
-    // if (kernelConnection.kind === 'connectToLiveRemoteKernel') {
-    // return false;
-    // }
-    // const hidden = hiddenList.some((item) => {
-    // if (item.type === 'jupyterKernelspec' && kernelConnection.kernelSpec.specFile) {
-    // return item.path.toLowerCase() === kernelConnection.kernelSpec.specFile.toLowerCase();
-    // }
-    // if (kernelConnection.kind === 'startUsingPythonInterpreter' && item.type === 'pythonEnvironment') {
-    // return item.path.toLowerCase() === getDisplayPath(kernelConnection.interpreter.uri).toLowerCase();
-    // }
-    // if (kernelConnection.kind === 'startUsingRemoteKernelSpec' && item.type === 'remoteKernelSpec') {
-    // return item.path === `${kernelConnection.kernelSpec.name}${kernelConnection.serverId}`;
-    // }
-    // return false;
-    // });
+        const hidden = hiddenList.some((item) => {
+            if (item.type === 'jupyterKernelspec' && kernelConnection.kernelSpec.specFile) {
+                return item.path.toLowerCase() === kernelConnection.kernelSpec.specFile.toLowerCase();
+            }
+            if (kernelConnection.kind === 'startUsingPythonInterpreter' && item.type === 'pythonEnvironment') {
+                return item.path.toLowerCase() === getDisplayPath(kernelConnection.interpreter.uri).toLowerCase();
+            }
+            if (kernelConnection.kind === 'startUsingRemoteKernelSpec' && item.type === 'remoteKernelSpec') {
+                return item.path === `${kernelConnection.kernelSpec.name}${kernelConnection.serverId}`;
+            }
+            return false;
+        });
 
-    // if (hidden) {
-    // sendTelemetryEvent(Telemetry.JupyterKernelHiddenViaFilter);
-    // }
-    // return hidden;
-    // }
+        if (hidden) {
+            sendTelemetryEvent(Telemetry.JupyterKernelHiddenViaFilter);
+        }
+        return hidden;
+    }
     private getFilters(): KernelFilter[] {
         // If user opened a mult-root workspace with multiple folders then combine them all.
         // As there's no way to provide controllers per folder.
