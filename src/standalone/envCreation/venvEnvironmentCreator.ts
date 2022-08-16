@@ -22,6 +22,7 @@ interface IInterpreterQuickPickItem extends QuickPickItem {
     interpreter: PythonEnvironment;
 }
 export class VenvEnvironmentCreator implements IEnvironmentCreator {
+    private availablePromise: Promise<boolean> | undefined;
     constructor(
         private readonly interpreterService: IInterpreterService,
         private readonly applicationShell: IApplicationShell,
@@ -31,9 +32,15 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
         private readonly installer: IInstaller
     ) {}
 
-    public available(): boolean {
-        // IANHU: This should check if we have a python on the system with pip and venv
-        return true;
+    // Basic logic, a python interpreter exists which has pip and venv
+    public async available(): Promise<boolean> {
+        // IANHU: Note for now we just calculate this once, probably not the long term solution
+        // such as if another interpreter is installed
+        if (!this.availablePromise) {
+            this.availablePromise = this.checkAvailability();
+        }
+
+        return this.availablePromise;
     }
 
     public hasWorkspaceLocalControllers(kernelConnectionMetadata: KernelConnectionMetadata[]): boolean {
@@ -49,6 +56,19 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
         } else {
             // IANHU: Throw?
         }
+    }
+
+    private async checkAvailability(): Promise<boolean> {
+        const interpreterList = await this.interpreterService.getInterpreters();
+
+        const foundValidInterpreter = interpreterList.some(async (interpreter) => {
+            const pipFound = await this.installer.isInstalled(Product.pip, interpreter);
+            const venvFound = await this.installer.isInstalled(Product.venv, interpreter);
+
+            return pipFound && venvFound;
+        });
+
+        return foundValidInterpreter;
     }
 
     private async getInterpreter(userPick: boolean): Promise<PythonEnvironment | undefined> {

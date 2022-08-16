@@ -25,6 +25,7 @@ import { VenvEnvironmentCreator } from './venvEnvironmentCreator';
 export class EnvironmentCreateCommand implements IExtensionSingleActivationService {
     private showEnvironmentCreateCommand: ContextKey;
     private foundWorkspaceLocalControllers: boolean = false;
+    private availableCreator: boolean = false;
     private environmentCreators: IEnvironmentCreator[] = [];
     constructor(
         @inject(IDisposableRegistry) private readonly disposables: IDisposableRegistry,
@@ -62,6 +63,9 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
         await this.showEnvironmentCreateCommand.set(false);
 
         this.disposables.push(this.controllerLoader.refreshed(this.onNotebookControllersLoaded, this));
+
+        // IANHU: This should probably not be in activate or should wait until requsted.
+        this.availableCreator = await this.hasAvailableEnvironmentCreators();
     }
 
     private async createEnvironment(): Promise<void> {
@@ -74,12 +78,23 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
 
     // When the active notebook changes, we need to check to see if we should show the command
     private async onDidChangeActiveNotebookEditor(editor: NotebookEditor | undefined) {
-        if (editor && !this.foundWorkspaceLocalControllers) {
+        if (editor && this.availableCreator && !this.foundWorkspaceLocalControllers) {
             // If we have an editor and we do not have workspace local controllers we want to see the command
             await this.showEnvironmentCreateCommand.set(true);
         } else {
             await this.showEnvironmentCreateCommand.set(false);
         }
+    }
+
+    // Do we have available ways to create an environment? Only need to run at the start once for now, but
+    // long term might need / want to refresh on new installs
+    private async hasAvailableEnvironmentCreators(): Promise<boolean> {
+        const availableCreators = this.environmentCreators.some(async (environmentCreator) => {
+            const avail = await environmentCreator.available();
+            return avail;
+        });
+
+        return availableCreators;
     }
 
     // When controllers finish loading, check the open document

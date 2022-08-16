@@ -20,7 +20,8 @@ export enum Product {
     nbconvert = 22,
     pandas = 23,
     pip = 27,
-    ensurepip = 28
+    ensurepip = 28,
+    venv = 29
 }
 
 export enum ProductInstallStatus {
