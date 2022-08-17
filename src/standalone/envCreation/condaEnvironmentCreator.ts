@@ -2,17 +2,28 @@
 // Licensed under the MIT License.
 'use strict';
 
-import { Memento } from 'vscode';
+import { Memento, QuickPickItem } from 'vscode';
 import { IInterpreterService } from '../../platform/interpreter/contracts';
 import { KernelConnectionMetadata } from '../../kernels/types';
 import { IEnvironmentCreator } from './types';
-import { EnvironmentType } from '../../platform/pythonEnvironments/info';
+import { EnvironmentType, PythonEnvironment } from '../../platform/pythonEnvironments/info';
 import { IProcessServiceFactory } from '../../platform/common/process/types.node';
 import { IMultiStepInputFactory } from '../../platform/common/utils/multiStepInput';
 import { IApplicationShell } from '../../platform/common/application/types';
-import { IControllerLoader, IControllerRegistration } from '../../notebooks/controllers/types';
+import {
+    IControllerLoader,
+    IControllerRegistration,
+    IVSCodeNotebookController
+} from '../../notebooks/controllers/types';
+import { createInterpreterKernelSpec, getKernelId } from '../../kernels/helpers';
+import { InteractiveWindowView, JupyterNotebookView } from '../../platform/common/constants';
+import { KernelFilterService } from '../../notebooks/controllers/kernelFilter/kernelFilterService';
 
 const WorkspaceCondaControllerMappingKey = 'workspace-mapped-conda-env';
+
+interface ICondaEnvironmentQuickPickItem extends QuickPickItem {
+    interpreter: PythonEnvironment;
+}
 
 export class CondaEnvironmentCreator implements IEnvironmentCreator {
     private availablePromise: Promise<boolean> | undefined;
@@ -22,7 +33,8 @@ export class CondaEnvironmentCreator implements IEnvironmentCreator {
         private readonly workspaceMemento: Memento,
         private readonly appShell: IApplicationShell,
         private readonly controllerRegistration: IControllerRegistration,
-        private readonly controllerLoader: IControllerLoader
+        private readonly controllerLoader: IControllerLoader,
+        private readonly kernelFilterService: KernelFilterService
     ) {}
 
     public readonly id: string = 'CondaEnvironmentCreator';
@@ -50,14 +62,15 @@ export class CondaEnvironmentCreator implements IEnvironmentCreator {
     public async create(): Promise<void> {
         // Offer two options
         // 1. Select Existing Conda Env
+        // Selecting an existing should be gated on having one found
         // 2. Create New Conda Env
         const selection = await this.selectExistingOrNewEnvironment();
 
         switch (selection) {
-            case 'new':
+            case 'New Conda Environment':
                 await this.createNewEnvironment();
                 break;
-            case 'existing':
+            case 'Existing Conda Environment':
                 await this.linkWorkspaceWithExistingEnvironment();
                 break;
             default:
@@ -65,25 +78,78 @@ export class CondaEnvironmentCreator implements IEnvironmentCreator {
         }
     }
 
-    private async linkWorkspaceWithExistingEnvironment(): Promise<void> {}
+    // Target an existing connection to use
+    private async linkWorkspaceWithExistingEnvironment(): Promise<void> {
+        const existingEnv = await this.getExistingCondaEnvironment();
 
-    private async createNewEnvironment(): Promise<void> {}
+        if (existingEnv) {
+            const registeredControllers = await this.registerController(existingEnv);
+
+            if (registeredControllers.length > 0) {
+                // If we registered a controller, also associate it with the workspace
+                // IANHU: For now, don't actually do this as I'm still testing the other bits first
+                // await this.workspaceMemento.update(WorkspaceCondaControllerMappingKey, registeredControllers[0].id);
+            }
+        }
+    }
+
+    // Register a controller for an existing conda env
+    private async registerController(interpreter: PythonEnvironment): Promise<IVSCodeNotebookController[]> {
+        const kernelSpec = createInterpreterKernelSpec(interpreter);
+        const id = getKernelId(kernelSpec, interpreter);
+        const connectionMetadata: KernelConnectionMetadata = {
+            kind: 'startUsingPythonInterpreter',
+            kernelSpec,
+            interpreter,
+            id
+        };
+
+        // IANHU: Also just for testing remove it from the kernel filter service
+        await this.kernelFilterService.removeConnectionFromFilter(connectionMetadata);
+
+        return this.controllerRegistration.add(connectionMetadata, [JupyterNotebookView, InteractiveWindowView]);
+    }
+
+    // Select an existing conda environment that we know about
+    private async getExistingCondaEnvironment(): Promise<PythonEnvironment | undefined> {
+        // IANHU: Possibly filter just on stuff that has IPyKernel
+        const condaConnections = this.controllerRegistration.all.filter((connection) => {
+            return (
+                connection.kind === 'startUsingPythonInterpreter' &&
+                connection.interpreter.envType === EnvironmentType.Conda
+            );
+        });
+
+        // IANHU: remove !
+        const condaEnvQuickPickItems: ICondaEnvironmentQuickPickItem[] = condaConnections.map((connection) => {
+            return { label: connection.interpreter!.displayName!, interpreter: connection.interpreter! };
+        });
+
+        const envSelected = await this.appShell.showQuickPick(condaEnvQuickPickItems, {
+            title: 'Select existing Conda environment'
+        });
+
+        if (envSelected) {
+            return envSelected.interpreter;
+        }
+
+        return undefined;
+    }
+
+    private async createNewEnvironment(): Promise<void> {
+        // This is a bit different we actually want Conda on the path...versus venv just pointing at the interpreter
+    }
 
     private async selectExistingOrNewEnvironment(): Promise<string | undefined> {
-        const pickOptions: string[] = ['new', 'existing'];
-        const selection = await this.appShell.showQuickPick(pickOptions, { title: 'Select Conda Env' });
+        const pickOptions: string[] = ['New Conda Environment', 'Existing Conda Environment'];
+        const selection = await this.appShell.showQuickPick(pickOptions, { title: 'Select New / Existing' });
         return selection;
     }
 
     // An interpreter exist which is a Conda interpreter
     private async checkAvailability(): Promise<boolean> {
-        // IANHU: Maybe this should actually be if Conda is on the path?
-        const interpreterList = await this.interpreterService.getInterpreters();
+        const envVar = process.env['CONDA_EXE'];
 
-        const foundValidInterpreter = interpreterList.some((interpreter) => {
-            return interpreter.envType === EnvironmentType.Conda;
-        });
-
-        return foundValidInterpreter;
+        return !!envVar;
     }
 }

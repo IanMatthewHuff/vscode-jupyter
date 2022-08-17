@@ -106,6 +106,33 @@ export class KernelFilterService implements IDisposable {
         }
         this._onDidChange.fire();
     }
+
+    // IANHU: Just added for testing
+    public async removeConnectionFromFilter(connection: KernelConnectionMetadata) {
+        const hiddenList = this.getFilters();
+
+        const targetFilter = this.translateConnectionToFilter(connection);
+
+        if (targetFilter) {
+            const newList = hiddenList.filter((filter) => {
+                return !(filter.type === targetFilter.type && filter.path === targetFilter.path);
+            });
+
+            // Dupe from above
+            const folders = (this.workspace.workspaceFolders || []).map((item) => item.uri);
+            if (folders.length > 0) {
+                await Promise.all(
+                    folders.map((folder) =>
+                        this.config.updateSetting('kernels.filter', newList, folder, ConfigurationTarget.Workspace)
+                    )
+                );
+            } else {
+                await this.config.updateSetting('kernels.filter', newList, undefined, ConfigurationTarget.Global);
+            }
+            this._onDidChange.fire();
+        }
+    }
+
     private translateConnectionToFilter(connection: KernelConnectionMetadata): KernelFilter | undefined {
         if (connection.kind === 'connectToLiveRemoteKernel') {
             traceVerbose('Hiding default or live kernels via filter is not supported');

@@ -6,6 +6,7 @@ import { Memento, NotebookEditor, QuickPickItem, window } from 'vscode';
 import { isPythonKernelConnection } from '../../kernels/helpers';
 import { IInstaller } from '../../kernels/installer/types';
 import { IKernelDependencyService } from '../../kernels/types';
+import { KernelFilterService } from '../../notebooks/controllers/kernelFilter/kernelFilterService';
 import { IControllerLoader, IControllerRegistration } from '../../notebooks/controllers/types';
 import { IExtensionSingleActivationService } from '../../platform/activation/types';
 import { IApplicationShell, ICommandManager } from '../../platform/common/application/types';
@@ -43,7 +44,8 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
         @inject(IProcessServiceFactory) private readonly processServiceFactory: IProcessServiceFactory,
         @inject(IKernelDependencyService) private readonly kernelDependencyService: IKernelDependencyService,
         @inject(IInstaller) private readonly installer: IInstaller,
-        @inject(IMemento) @named(WORKSPACE_MEMENTO) private readonly workspaceMemento: Memento
+        @inject(IMemento) @named(WORKSPACE_MEMENTO) private readonly workspaceMemento: Memento,
+        @inject(KernelFilterService) private readonly kernelFilterService: KernelFilterService
     ) {
         // Context keys to control when these commands are shown
         this.showEnvironmentCreateCommand = new ContextKey('jupyter.showEnvironmentCreateCommand', this.commandManager);
@@ -69,7 +71,8 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
                 this.workspaceMemento,
                 this.appShell,
                 this.controllerRegistration,
-                this.controllerLoader
+                this.controllerLoader,
+                this.kernelFilterService
             )
         );
     }
