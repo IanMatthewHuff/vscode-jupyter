@@ -2,7 +2,8 @@
 // Licensed under the MIT License.
 'use strict';
 
-import { Memento, QuickPickItem } from 'vscode';
+import * as path from '../../platform/vscode-path/path';
+import { Memento, QuickPickItem, Uri, workspace } from 'vscode';
 import { IInterpreterService } from '../../platform/interpreter/contracts';
 import { KernelConnectionMetadata } from '../../kernels/types';
 import { IEnvironmentCreator } from './types';
@@ -18,6 +19,7 @@ import {
 import { createInterpreterKernelSpec, getKernelId } from '../../kernels/helpers';
 import { InteractiveWindowView, JupyterNotebookView } from '../../platform/common/constants';
 import { KernelFilterService } from '../../notebooks/controllers/kernelFilter/kernelFilterService';
+import { traceInfo } from '../../platform/logging';
 
 const WorkspaceCondaControllerMappingKey = 'workspace-mapped-conda-env';
 
@@ -137,7 +139,45 @@ export class CondaEnvironmentCreator implements IEnvironmentCreator {
     }
 
     private async createNewEnvironment(): Promise<void> {
-        // This is a bit different we actually want Conda on the path...versus venv just pointing at the interpreter
+        const condaPath = process.env['CONDA_EXE'];
+        const processService = await this.processServiceFactory.create(undefined);
+        // IANHU: This is a bit naieve and not correct for multi root
+        const workspaceDir = workspace.workspaceFolders?.[0].uri.fsPath;
+
+        const envName = await this.getCondaEnvironmentName();
+
+        if (condaPath && workspaceDir && envName) {
+            const output = await processService.exec(
+                condaPath,
+                ['create', '-n', envName, 'python', 'ipykernel', '-y'],
+                { cwd: workspaceDir, throwOnStdErr: false, mergeStdOutErr: true }
+            );
+
+            traceInfo(output.stdout);
+
+            const condaInterpreter = await this.getCreatedInterpreter(envName);
+
+            if (!condaInterpreter) {
+                return;
+            }
+
+            await this.registerController(condaInterpreter);
+        }
+    }
+
+    private async getCreatedInterpreter(envName: string): Promise<PythonEnvironment | undefined> {
+        const condaBase = process.env['CONDA_ROOT'];
+
+        if (condaBase) {
+            const condaEnvPath = path.join(condaBase, 'envs', envName, 'bin', 'python');
+            const condaUri = Uri.file(condaEnvPath);
+            return this.interpreterService.getInterpreterDetails(condaUri);
+        }
+    }
+
+    private async getCondaEnvironmentName(): Promise<string | undefined> {
+        const name = await this.appShell.showInputBox({ title: 'Select Conda Environment Name' });
+        return name;
     }
 
     private async selectExistingOrNewEnvironment(): Promise<string | undefined> {
