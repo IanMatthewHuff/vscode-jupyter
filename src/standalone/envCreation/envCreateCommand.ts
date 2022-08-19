@@ -1,6 +1,8 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
+
 import { inject, injectable, named } from 'inversify';
 import { Memento, NotebookEditor, QuickPickItem, window } from 'vscode';
 import { isPythonKernelConnection } from '../../kernels/helpers';
@@ -148,19 +150,22 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
 
     // When controllers finish loading, check the open document
     private async onNotebookControllersLoaded() {
-        this.foundWorkspaceLocalControllers = this.findWorkspaceLocalControllers();
+        this.foundWorkspaceLocalControllers = await this.findWorkspaceLocalControllers();
         await this.onDidChangeActiveNotebookEditor(window.activeNotebookEditor);
     }
 
     // Given the currently registered controllers, are any of them workspace local?
-    private findWorkspaceLocalControllers(): boolean {
+    private async findWorkspaceLocalControllers(): Promise<boolean> {
         const pythonControllers = this.controllerRegistration.all.filter((item) => isPythonKernelConnection(item));
 
-        const foundControllers = this.environmentCreators.some((environmentCreator) => {
+        // We want to actually run this on all the creators to let them process
+        const foundControllers = this.environmentCreators.map((environmentCreator) => {
             return environmentCreator.hasWorkspaceLocalControllers(pythonControllers);
         });
 
-        // IANHU: Unneeded temp, just for debugging
-        return foundControllers;
+        const results = await Promise.all(foundControllers);
+
+        // While we run it on all, we only care at this point of some of them had something local
+        return results.some((value) => value);
     }
 }

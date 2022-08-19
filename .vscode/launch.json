@@ -23,7 +23,8 @@
                 // Enable this to log IPYWIDGET messages
                 "XVSC_JUPYTER_LOG_IPYWIDGETS": "1",
                 // Enable this to log debugger output. Directory must exist ahead of time
-                "XDEBUGPY_LOG_DIR": "${workspaceRoot}/tmp/Debug_Output_Ex"
+                "XDEBUGPY_LOG_DIR": "${workspaceRoot}/tmp/Debug_Output_Ex",
+                // "CONDA_PREFIX": "/Users/ianhuff/opt/miniconda3/envs/jupyterEnv"
             },
             "presentation": {
                 "group": "1_extension",
