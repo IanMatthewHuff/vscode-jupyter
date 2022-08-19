@@ -3,7 +3,7 @@
 'use strict';
 
 import * as path from '../../platform/vscode-path/path';
-import { CancellationTokenSource, QuickPickItem, Uri, window, workspace } from 'vscode';
+import { CancellationTokenSource, QuickPickItem, Uri, workspace } from 'vscode';
 import { createInterpreterKernelSpec, getKernelId } from '../../kernels/helpers';
 import { IKernelDependencyService, KernelConnectionMetadata } from '../../kernels/types';
 import { IControllerRegistration, IVSCodeNotebookController } from '../../notebooks/controllers/types';
@@ -15,8 +15,9 @@ import { traceInfo } from '../../platform/logging';
 import { EnvironmentType } from '../../platform/pythonEnvironments/info';
 import { PythonEnvironment } from '../api/extension';
 import { IEnvironmentCreator } from './types';
-import { DisplayOptions } from '../../kernels/displayOptions';
 import { IInstaller, Product } from '../../kernels/installer/types';
+import { ProgressReporter } from '../../platform/progress/progressReporter';
+import { ReportableAction } from '../../platform/progress/types';
 
 interface IInterpreterQuickPickItem extends QuickPickItem {
     interpreter: PythonEnvironment;
@@ -29,7 +30,8 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
         private readonly processServiceFactory: IProcessServiceFactory,
         private readonly controllerRegistration: IControllerRegistration,
         private readonly kernelDependencyService: IKernelDependencyService,
-        private readonly installer: IInstaller
+        private readonly installer: IInstaller,
+        private readonly progressReporter: ProgressReporter
     ) {}
 
     public readonly id: string = 'VenvEnvironmentCreator';
@@ -46,7 +48,7 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
         return this.availablePromise;
     }
 
-    public hasWorkspaceLocalControllers(kernelConnectionMetadata: KernelConnectionMetadata[]): boolean {
+    public async hasWorkspaceLocalControllers(kernelConnectionMetadata: KernelConnectionMetadata[]): Promise<boolean> {
         // IANHU: Abstract base class possibility later?
         return kernelConnectionMetadata.some((connectionMetadata) => isWorkspaceLocalConnection(connectionMetadata));
     }
@@ -117,44 +119,50 @@ export class VenvEnvironmentCreator implements IEnvironmentCreator {
     }
 
     private async createVenv(interpreter: PythonEnvironment): Promise<void> {
-        // IANHU: Pass in the resource here as activenotebook? Or not needed?
-        const processService = await this.processServiceFactory.create(undefined);
+        this.progressReporter.report({ action: ReportableAction.CreatingVenvEnvironment, phase: 'started' });
 
-        // IANHU: This is a bit naieve and not correct for multi root
-        const workspaceDir = workspace.workspaceFolders?.[0].uri.fsPath;
+        try {
+            // IANHU: Pass in the resource here as activenotebook? Or not needed?
+            const processService = await this.processServiceFactory.create(undefined);
 
-        if (!workspaceDir) {
-            return;
-            // THROW?
+            // IANHU: This is a bit naieve and not correct for multi root
+            const workspaceDir = workspace.workspaceFolders?.[0].uri.fsPath;
+
+            if (!workspaceDir) {
+                return;
+                // THROW?
+            }
+
+            const output = await processService.exec(interpreter.uri.fsPath, ['-m', 'venv', '.venv'], {
+                cwd: workspaceDir,
+                throwOnStdErr: false,
+                mergeStdOutErr: true
+            });
+
+            // IANHU: Error handling. Looks like we get '' for a correct generation, also can check
+            // to make sure the file is there
+            traceInfo(output.stdout);
+
+            const newInterpreter = await this.getCreatedInterpreter(workspaceDir);
+
+            if (!newInterpreter) {
+                // IANHU: Error
+                return;
+            }
+
+            // Now register a controller off of the created venv
+            const registeredControllers = await this.registerController(newInterpreter);
+
+            if (!(registeredControllers.length > 0)) {
+                // IANHU: Error
+                return;
+            }
+
+            // Get our packages in there as well
+            await this.installPackages(registeredControllers[0]);
+        } finally {
+            this.progressReporter.report({ action: ReportableAction.CreatingVenvEnvironment, phase: 'completed' });
         }
-
-        const output = await processService.exec(interpreter.uri.fsPath, ['-m', 'venv', '.venv'], {
-            cwd: workspaceDir,
-            throwOnStdErr: false,
-            mergeStdOutErr: true
-        });
-
-        // IANHU: Error handling. Looks like we get '' for a correct generation, also can check
-        // to make sure the file is there
-        traceInfo(output.stdout);
-
-        const newInterpreter = await this.getCreatedInterpreter(workspaceDir);
-
-        if (!newInterpreter) {
-            // IANHU: Error
-            return;
-        }
-
-        // Now register a controller off of the created venv
-        const registeredControllers = await this.registerController(newInterpreter);
-
-        if (!(registeredControllers.length > 0)) {
-            // IANHU: Error
-            return;
-        }
-
-        // Get our packages in there as well
-        await this.installPackages(registeredControllers[0]);
     }
 
     private async getCreatedInterpreter(workspaceDir: string): Promise<PythonEnvironment | undefined> {

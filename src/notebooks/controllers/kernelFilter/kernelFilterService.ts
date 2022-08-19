@@ -10,7 +10,7 @@ import { KernelConnectionMetadata } from '../../../kernels/types';
 import { sendTelemetryEvent } from '../../../telemetry';
 import { Telemetry } from '../../../platform/common/constants';
 import { getDisplayPath } from '../../../platform/common/platform/fs-paths';
-import { EnvironmentType } from '../../../platform/pythonEnvironments/info';
+//import { EnvironmentType } from '../../../platform/pythonEnvironments/info';
 
 /**
  * Keeps track of which kernels are filtered or not. Supports local and remote but not 'live' kernels.

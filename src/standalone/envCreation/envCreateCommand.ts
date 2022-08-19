@@ -14,11 +14,11 @@ import { Commands } from '../../platform/common/constants';
 import { ContextKey } from '../../platform/common/contextKey';
 import { IProcessServiceFactory } from '../../platform/common/process/types.node';
 import { IDisposableRegistry, IMemento, WORKSPACE_MEMENTO } from '../../platform/common/types';
-import { IMultiStepInputFactory } from '../../platform/common/utils/multiStepInput';
 import { IInterpreterService } from '../../platform/interpreter/contracts';
-import { CondaEnvironmentCreator } from './condaEnvironmentCreator';
+import { ProgressReporter } from '../../platform/progress/progressReporter';
+import { CondaEnvironmentCreator } from './condaEnvironmentCreator.node';
 import { IEnvironmentCreator } from './types';
-import { VenvEnvironmentCreator } from './venvEnvironmentCreator';
+import { VenvEnvironmentCreator } from './venvEnvironmentCreator.node';
 
 interface ICreatorQuickPickItem extends QuickPickItem {
     creator: IEnvironmentCreator;
@@ -45,7 +45,8 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
         @inject(IKernelDependencyService) private readonly kernelDependencyService: IKernelDependencyService,
         @inject(IInstaller) private readonly installer: IInstaller,
         @inject(IMemento) @named(WORKSPACE_MEMENTO) private readonly workspaceMemento: Memento,
-        @inject(KernelFilterService) private readonly kernelFilterService: KernelFilterService
+        @inject(KernelFilterService) private readonly kernelFilterService: KernelFilterService,
+        @inject(ProgressReporter) private readonly progressReporter: ProgressReporter
     ) {
         // Context keys to control when these commands are shown
         this.showEnvironmentCreateCommand = new ContextKey('jupyter.showEnvironmentCreateCommand', this.commandManager);
@@ -63,7 +64,8 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
                 this.processServiceFactory,
                 this.controllerRegistration,
                 this.kernelDependencyService,
-                this.installer
+                this.installer,
+                this.progressReporter
             ),
             new CondaEnvironmentCreator(
                 this.interpreterService,
@@ -72,7 +74,8 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
                 this.appShell,
                 this.controllerRegistration,
                 this.controllerLoader,
-                this.kernelFilterService
+                this.kernelFilterService,
+                this.progressReporter
             )
         );
     }
@@ -87,10 +90,16 @@ export class EnvironmentCreateCommand implements IExtensionSingleActivationServi
     }
 
     private async createEnvironment(): Promise<void> {
-        const selectedCreator = await this.selectCreator();
+        const reporter = this.progressReporter.createProgressIndicator('Creating notebook environment');
 
-        if (selectedCreator) {
-            await selectedCreator.create();
+        try {
+            const selectedCreator = await this.selectCreator();
+
+            if (selectedCreator) {
+                await selectedCreator.create();
+            }
+        } finally {
+            reporter.dispose();
         }
     }
 

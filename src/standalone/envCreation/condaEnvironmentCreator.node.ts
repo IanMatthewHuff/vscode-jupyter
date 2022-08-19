@@ -9,7 +9,6 @@ import { KernelConnectionMetadata } from '../../kernels/types';
 import { IEnvironmentCreator } from './types';
 import { EnvironmentType, PythonEnvironment } from '../../platform/pythonEnvironments/info';
 import { IProcessServiceFactory } from '../../platform/common/process/types.node';
-import { IMultiStepInputFactory } from '../../platform/common/utils/multiStepInput';
 import { IApplicationShell } from '../../platform/common/application/types';
 import {
     IControllerLoader,
@@ -20,6 +19,8 @@ import { createInterpreterKernelSpec, getKernelId } from '../../kernels/helpers'
 import { InteractiveWindowView, JupyterNotebookView } from '../../platform/common/constants';
 import { KernelFilterService } from '../../notebooks/controllers/kernelFilter/kernelFilterService';
 import { traceInfo } from '../../platform/logging';
+import { ProgressReporter } from '../../platform/progress/progressReporter';
+import { ReportableAction } from '../../platform/progress/types';
 
 const WorkspaceCondaControllerMappingKey = 'workspace-mapped-conda-env';
 
@@ -36,7 +37,8 @@ export class CondaEnvironmentCreator implements IEnvironmentCreator {
         private readonly appShell: IApplicationShell,
         private readonly controllerRegistration: IControllerRegistration,
         private readonly controllerLoader: IControllerLoader,
-        private readonly kernelFilterService: KernelFilterService
+        private readonly kernelFilterService: KernelFilterService,
+        private readonly progressReporter: ProgressReporter
     ) {}
 
     public readonly id: string = 'CondaEnvironmentCreator';
@@ -52,33 +54,66 @@ export class CondaEnvironmentCreator implements IEnvironmentCreator {
         return this.availablePromise;
     }
 
-    public hasWorkspaceLocalControllers(_kernelConnectionMetadata: KernelConnectionMetadata[]): boolean {
+    public async hasWorkspaceLocalControllers(_kernelConnectionMetadata: KernelConnectionMetadata[]): Promise<boolean> {
         // Possible flow
         // 1. Is there a current conda env active?
-        // IANHU: Figuring this out later?
         // 2. Have we mapped in a previous workspace?
-        const mementoValue = this.workspaceMemento.get<string | undefined>(WorkspaceCondaControllerMappingKey);
+        const previousLink = await this.previousLinkedCondaEnv();
+        const activeEnv = await this.activeCondaEnvironment();
 
-        return !!mementoValue;
+        return previousLink || activeEnv;
     }
+
     public async create(): Promise<void> {
+        this.progressReporter.report({ action: ReportableAction.CreatingCondaEnvironment, phase: 'started' });
+
         // Offer two options
         // 1. Select Existing Conda Env
         // Selecting an existing should be gated on having one found
         // 2. Create New Conda Env
-        const selection = await this.selectExistingOrNewEnvironment();
+        try {
+            const selection = await this.selectExistingOrNewEnvironment();
 
-        switch (selection) {
-            case 'New Conda Environment':
-                await this.createNewEnvironment();
-                break;
-            case 'Existing Conda Environment':
-                await this.linkWorkspaceWithExistingEnvironment();
-                break;
-            default:
-                break;
+            switch (selection) {
+                case 'New Conda Environment':
+                    await this.createNewEnvironment();
+                    break;
+                case 'Existing Conda Environment':
+                    await this.linkWorkspaceWithExistingEnvironment();
+                    break;
+                default:
+                    break;
+            }
+        } finally {
+            this.progressReporter.report({ action: ReportableAction.CreatingCondaEnvironment, phase: 'started' });
         }
     }
+
+    // Was vscode launched from an active conda environment?
+    private async activeCondaEnvironment(): Promise<boolean> {
+        // From peeking it seems like CONDA_PREFIX which points to the current active env might be the way to do this
+        const condaPrefix = process.env['CONDA_PREFIX'];
+
+        if (condaPrefix) {
+            const condaEnvPath = path.join(condaPrefix, 'bin', 'python');
+            const condaUri = Uri.file(condaEnvPath);
+            const interpreterDetails = await this.interpreterService.getInterpreterDetails(condaUri);
+
+            if (interpreterDetails) {
+                await this.registerController(interpreterDetails);
+            }
+        }
+
+        return false;
+    }
+
+    // Have we mapped in a previous global conda => workspace mapping?
+    private async previousLinkedCondaEnv() {
+        const mementoValue = this.workspaceMemento.get<string | undefined>(WorkspaceCondaControllerMappingKey);
+        return !!mementoValue;
+    }
+
+    // Have we previously created a local mapping from this workspace to a global conda env?
 
     // Target an existing connection to use
     private async linkWorkspaceWithExistingEnvironment(): Promise<void> {

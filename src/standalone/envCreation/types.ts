@@ -9,7 +9,7 @@ export interface IEnvironmentCreator {
     // Is this environment creator an available option on the system?
     available(): Promise<boolean>;
     // Do any of the given kernel connections qualify as a workspace local connection?
-    hasWorkspaceLocalControllers(kernelConnectionMetadata: KernelConnectionMetadata[]): boolean;
+    hasWorkspaceLocalControllers(kernelConnectionMetadata: KernelConnectionMetadata[]): Promise<boolean>;
     // Create an environment
     create(): Promise<void>;
     // Unique ID for this creator
