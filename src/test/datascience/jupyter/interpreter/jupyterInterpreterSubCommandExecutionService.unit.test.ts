@@ -1,10 +1,10 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
 
 import { assert, expect, use } from 'chai';
-import * as chaiPromise from 'chai-as-promised';
+import chaiPromise from 'chai-as-promised';
 import * as path from '../../../../platform/vscode-path/path';
 import * as fsExtra from 'fs-extra';
 import * as sinon from 'sinon';

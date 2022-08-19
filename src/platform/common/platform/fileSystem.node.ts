@@ -1,9 +1,9 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 import * as path from '../../../platform/vscode-path/path';
 import * as fs from 'fs-extra';
-import * as glob from 'glob';
+import glob from 'glob';
 import { inject, injectable } from 'inversify';
 import * as tmp from 'tmp';
 import { promisify } from 'util';

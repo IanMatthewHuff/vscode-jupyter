@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -7,13 +7,13 @@ suite('Dummy8', () => {
         //
     });
 });
-// // Copyright (c) Microsoft Corporation. All rights reserved.
+// // Copyright (c) Microsoft Corporation.
 // // Licensed under the MIT License.
 // 'use strict';
 // import type * as nbformat from '@jupyterlab/nbformat';
 // import { assert, expect, use } from 'chai';
-// import * as chaiAsPromised from 'chai-as-promised';
-// import * as dedent from 'dedent';
+// import chaiAsPromised from 'chai-as-promised';
+// import dedent from 'dedent';
 // import { ReactWrapper } from 'enzyme';
 // import * as fs from 'fs-extra';
 // import * as path from 'path';

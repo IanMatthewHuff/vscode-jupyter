@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -6,7 +6,7 @@
 /* eslint-disable  */
 
 import { expect, use } from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
+import chaiAsPromised from 'chai-as-promised';
 import * as path from '../../../platform/vscode-path/path';
 import { FileSystem } from '../../../platform/common/platform/fileSystem.node';
 import { EnvironmentVariablesService } from '../../../platform/common/variables/environment.node';

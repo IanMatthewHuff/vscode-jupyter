@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 import { inject, injectable } from 'inversify';
@@ -25,6 +25,13 @@ export class KernelStartupCodeProvider implements IStartupCodeProvider {
     ) {}
 
     async getCode(kernel: IKernel): Promise<string[]> {
+        // If this is a live kernel, we shouldn't be changing anything by running startup code.
+        if (
+            !isPythonKernelConnection(kernel.kernelConnectionMetadata) &&
+            kernel.kernelConnectionMetadata.kind !== 'connectToLiveRemoteKernel'
+        ) {
+            return [];
+        }
         if (
             !(
                 isLocalConnection(kernel.kernelConnectionMetadata) &&

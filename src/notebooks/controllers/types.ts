@@ -1,11 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import * as vscode from 'vscode';
+import { INotebookMetadata } from '@jupyterlab/nbformat';
 import { KernelConnectionMetadata } from '../../kernels/types';
 import { JupyterNotebookView, InteractiveWindowView } from '../../platform/common/constants';
 import { IDisposable, Resource } from '../../platform/common/types';
+import { PythonEnvironment } from '../../platform/pythonEnvironments/info';
 
 export const InteractiveControllerIdSuffix = ' (Interactive)';
 
@@ -29,6 +32,7 @@ export interface IVSCodeNotebookController extends IDisposable {
     asWebviewUri(localResource: vscode.Uri): vscode.Uri;
     isAssociatedWithDocument(notebook: vscode.NotebookDocument): boolean;
     updateConnection(connection: KernelConnectionMetadata): void;
+    setPendingCellAddition(notebook: vscode.NotebookDocument, promise: Promise<void>): void;
 }
 export const IControllerRegistration = Symbol('IControllerRegistration');
 
@@ -97,6 +101,25 @@ export interface IControllerPreferredService {
      * @param notebook
      */
     getPreferred(notebook: vscode.NotebookDocument): IVSCodeNotebookController | undefined;
+}
+
+export const IKernelRankingHelper = Symbol('IKernelRankingHelper');
+export interface IKernelRankingHelper {
+    rankKernels(
+        resource: Resource,
+        option?: INotebookMetadata,
+        preferredInterpreter?: PythonEnvironment,
+        cancelToken?: vscode.CancellationToken,
+        useCache?: 'useCache' | 'ignoreCache',
+        serverId?: string
+    ): Promise<KernelConnectionMetadata[] | undefined>;
+
+    // For the given kernel connection, return true if it's an exact match for the notebookMetadata
+    isExactMatch(
+        resource: Resource,
+        kernelConnection: KernelConnectionMetadata,
+        notebookMetadata: INotebookMetadata | undefined
+    ): boolean;
 }
 
 export const IControllerDefaultService = Symbol('IControllerDefaultService');

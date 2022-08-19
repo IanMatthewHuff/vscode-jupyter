@@ -9,7 +9,8 @@ Expand each section to see more information about that event.
 
 
 
- Data Science
+
+ Telemetry event sent when user adds a cell below the current cell for IW.
 
 ## Properties
 
@@ -37,11 +38,15 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ User exports the IW or Notebook to a specific format.
 
 ## Properties
 
--  format: ExportFormat
+
+No properties for event
+
 
 ## Locations Used
 
@@ -259,7 +264,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Telemetry event sent when user hits the `continue` button while debugging IW
 
 ## Properties
 
@@ -287,7 +294,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Telemetry event sent when user debugs the cell in the IW
 
 ## Properties
 
@@ -327,7 +336,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Telemetry event sent when user debugs the file in the IW
 
 ## Properties
 
@@ -355,7 +366,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Telemetry event sent when user hits the `step over` button while debugging IW
 
 ## Properties
 
@@ -383,7 +396,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Telemetry event sent when user hits the `stop` button while debugging IW
 
 ## Properties
 
@@ -804,7 +819,9 @@ Event can be removed. Not referenced anywhere
 ## Description
 
 
-No description provided
+
+
+ Disables using Shift+Enter to run code in IW (this is in response to the prompt recommending users to enable this to use the IW)
 
 ## Properties
 
@@ -844,7 +861,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Disables using Shift+Enter to run code in IW (this is in response to the prompt recommending users to enable this to use the IW)
 
 ## Properties
 
@@ -915,7 +934,9 @@ No properties for event
 
 
 
- Applies to everything (interactive+Notebooks & local+remote)
+
+ Executes a cell, applies to IW and Notebook.
+ Check the `resourceType` to determine whether its a Jupyter Notebook or IW.
 
 ## Properties
 
@@ -925,35 +946,11 @@ No properties for event
 
 ## Locations Used
 
-[src/kernels/telemetry/sendKernelTelemetryEvent.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/telemetry/sendKernelTelemetryEvent.ts)
-```typescript
-    properties?: P[E] & { waitBeforeSending?: Promise<void> },
-    ex?: Error
-) {
-    if (eventName === Telemetry.ExecuteCell) {
-        setSharedProperty('userExecutedCell', 'true');
-    }
-
-```
-
-
-[src/kernels/telemetry/sendKernelTelemetryEvent.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/telemetry/sendKernelTelemetryEvent.ts)
-```typescript
-    handleError: boolean,
-    properties?: P[E] & { [waitBeforeSending]?: Promise<void> }
-) {
-    if (eventName === Telemetry.ExecuteCell) {
-        setSharedProperty('userExecutedCell', 'true');
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-```
-
-
 [src/kernels/kernel.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/kernel.ts)
 ```typescript
-    }
     public async executeCell(cell: NotebookCell, codeOverride?: string): Promise<NotebookCellRunState> {
         traceCellMessage(cell, `kernel.executeCell, ${getDisplayPath(cell.notebook.uri)}`);
+        initializeInteractiveOrNotebookTelemetryBasedOnUserAction(this.resourceUri, this.kernelConnectionMetadata);
         sendKernelTelemetryEvent(this.resourceUri, Telemetry.ExecuteCell);
         const stopWatch = new StopWatch();
         const sessionPromise = this.startJupyterSession();
@@ -1048,14 +1045,17 @@ Event can be removed. Not referenced anywhere
 ## Description
 
 
-No description provided
+
+
+ Called when user imports a Jupyter Notebook into a Python file.
+ Command is `Jupyter: Import Jupyter Notebook`
+ Basically user is exporting some jupyter notebook into a Python file or other.
 
 ## Properties
 
--  format: ExportFormat;
--  cancelled?: boolean;
--  successful?: boolean;
--  opened?: boolean
+
+No properties for event
+
 
 ## Locations Used
 
@@ -1101,11 +1101,17 @@ No description provided
 ## Description
 
 
-No description provided
+
+
+ Called when user exports a Jupyter Notebook or IW into a Python file, HTML, PDF, etc.
+ Command is `Jupyter: Export to Python Script` or `Jupyter: Export to HTML`
+ Basically user is exporting some jupyter notebook or IW into a Python file or other.
 
 ## Properties
 
--  format: ExportFormat
+
+No properties for event
+
 
 ## Locations Used
 
@@ -1127,11 +1133,15 @@ No description provided
 ## Description
 
 
-No description provided
+
+
+ Export fails
 
 ## Properties
 
--  format: ExportFormat
+
+No properties for event
+
 
 ## Locations Used
 
@@ -1153,7 +1163,9 @@ No description provided
 ## Description
 
 
-No description provided
+
+
+ User exports a .py file with cells as a Jupyter Notebook.
 
 ## Properties
 
@@ -1181,7 +1193,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ User exports a .py file with cells along with the outputs from the current IW as a Jupyter Notebook.
 
 ## Properties
 
@@ -1318,7 +1332,7 @@ No properties for event
 
 ## Locations Used
 
-[src/kernels/kernelFinder.base.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/kernelFinder.base.ts)
+[src/kernels/kernelFinder.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/kernelFinder.ts)
 ```typescript
         const key = `${kind}:${useCache}`;
         if (this.startTimeForFetching && !this.fetchingTelemetrySent.has(key)) {
@@ -1439,6 +1453,62 @@ Event can be removed. Not referenced anywhere
 ## Description
 
 
+
+
+ Called when user imports a Jupyter Notebook into a Python file.
+ Command is `Jupyter: Import Jupyter Notebook`
+ Basically user is exporting some jupyter notebook into a Python file.
+
+## Properties
+
+
+No properties for event
+
+
+## Locations Used
+
+[src/telemetry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/telemetry.ts)
+```typescript
+    [Telemetry.GetPasswordSuccess]: never | undefined;
+    [Telemetry.GotoSourceCode]: never | undefined;
+    [Telemetry.HiddenCellTime]: never | undefined;
+    [Telemetry.ImportNotebook]: { scope: 'command' | 'file' };
+    /**
+     * User interrupts a cell
+     * Identical to `Telemetry.InterruptJupyterTime`
+```
+
+
+[src/interactive-window/commands/commandRegistry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/interactive-window/commands/commandRegistry.ts)
+```typescript
+        return this.statusProvider.waitWithStatus(promise, message, undefined, canceled);
+    }
+
+    @captureTelemetry(Telemetry.ImportNotebook, { scope: 'command' }, false)
+    private async importNotebook(): Promise<void> {
+        const filtersKey = DataScience.importDialogFilter();
+        const filtersObject: { [name: string]: string[] } = {};
+```
+
+
+[src/interactive-window/commands/commandRegistry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/interactive-window/commands/commandRegistry.ts)
+```typescript
+        }
+    }
+
+    @captureTelemetry(Telemetry.ImportNotebook, { scope: 'file' }, false)
+    private async importNotebookOnFile(file: Uri): Promise<void> {
+        const filepath = getFilePath(file);
+        if (filepath && filepath.length > 0) {
+```
+
+</details>
+<details>
+  <summary>DATASCIENCE.IMPORT_NOTEBOOK</summary>
+
+## Description
+
+
 No description provided
 
 ## Properties
@@ -1446,6 +1516,18 @@ No description provided
 -  scope: 'command' | 'file'
 
 ## Locations Used
+
+[src/telemetry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/telemetry.ts)
+```typescript
+     * Command is `Jupyter: Import Jupyter Notebook`
+     * Basically user is exporting some jupyter notebook into a Python file.
+     */
+    [Telemetry.ImportNotebook]: { scope: 'command' | 'file' };
+    /**
+     * Called when user exports a Jupyter Notebook or IW into a Python file, HTML, PDF, etc.
+     * Command is `Jupyter: Export to Python Script` or `Jupyter: Export to HTML`
+```
+
 
 [src/interactive-window/commands/commandRegistry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/interactive-window/commands/commandRegistry.ts)
 ```typescript
@@ -1554,7 +1636,10 @@ No description provided
 ## Description
 
 
-No description provided
+
+
+ User interrupts a cell
+ Identical to `Telemetry.InterruptJupyterTime`
 
 ## Properties
 
@@ -1847,6 +1932,18 @@ No properties for event
         if (!lastExecutedCell) {
             return;
         }
+```
+
+
+[src/kernels/kernelAutoReConnectFailedMonitor.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/kernelAutoReConnectFailedMonitor.ts)
+```typescript
+        if (kernel.disposed || kernel.disposing) {
+            return;
+        }
+        sendKernelTelemetryEvent(kernel.resourceUri, Telemetry.KernelCrash);
+
+        const message = isLocalConnection(kernel.kernelConnectionMetadata)
+            ? DataScience.kernelDisconnected().format(
 ```
 
 </details>
@@ -2693,7 +2790,10 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Total time taken to interrupt a kernel
+ Check the `resourceType` to determine whether its a Jupyter Notebook or IW.
 
 ## Properties
 
@@ -2802,7 +2902,10 @@ export function sendNotebookOrKernelLanguageTelemetry(
 ## Description
 
 
-No description provided
+
+
+ Restarts the Kernel.
+ Check the `resourceType` to determine whether its a Jupyter Notebook or IW.
 
 ## Properties
 
@@ -2898,7 +3001,7 @@ No properties for event
 
 [src/kernels/kernel.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/kernel.ts)
 ```typescript
-            this.restarting = undefined;
+            this._jupyterSessionPromise = undefined;
             // If we get a kernel promise failure, then restarting timed out. Just shutdown and restart the entire server.
             // Note, this code might not be necessary, as such an error is thrown only when interrupting a kernel times out.
             sendKernelTelemetryEvent(this.resourceUri, Telemetry.NotebookRestart, stopWatch.elapsedTime, undefined, ex);
@@ -2914,7 +3017,10 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Starts a kernel, applies to IW and Notebook.
+ Check the `resourceType` to determine whether its a Jupyter Notebook or IW.
 
 ## Properties
 
@@ -2972,15 +3078,15 @@ function incrementStartFailureCount(resource: Resource, eventName: any, properti
 ```
 
 
-[src/kernels/jupyter/launcher/notebookProvider.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/jupyter/launcher/notebookProvider.ts)
+[src/kernels/kernel.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/kernel.ts)
 ```typescript
-
-        sendKernelTelemetryWhenDone(
-            options.resource,
-            Telemetry.NotebookStart,
-            promise || Promise.resolve(undefined),
-            false, // Error telemetry will be sent further up the chain, after we have analyzed the error, such as if dependencies are installed or not.
-            {
+        this.uiWasDisabledWhenKernelStartupTelemetryWasLastSent = this.startupUI.disableUI === true;
+        // The corresponding failure telemetry property for the `Telemetry.NotebookStart` event will be sent in the Error Handler,
+        // after we analyze the error.
+        sendKernelTelemetryEvent(this.resourceUri, Telemetry.NotebookStart, undefined, {
+            disableUI: this.startupUI.disableUI
+        });
+    }
 ```
 
 
@@ -3263,7 +3369,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Telemetry event sent when IW or Notebook is restarted.
 
 ## Properties
 
@@ -3275,13 +3383,13 @@ No properties for event
 
 [src/notebooks/notebookCommandListener.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/notebooks/notebookCommandListener.ts)
 ```typescript
-            return;
-        }
-
-        sendTelemetryEvent(Telemetry.RestartKernelCommand);
         const kernel = this.kernelProvider.get(document);
 
         if (kernel) {
+            sendKernelTelemetryEvent(kernel.resourceUri, Telemetry.RestartKernelCommand);
+            trackKernelResourceInformation(kernel.resourceUri, { restartKernel: true });
+            if (await this.shouldAskForRestart(document.uri)) {
+                // Ask the user if they want us to restart or not.
 ```
 
 </details>
@@ -3314,7 +3422,7 @@ Event can be removed. Not referenced anywhere
 
 
 
- Run Cell Commands in Interactive Python
+ Run all Cell Commands in Interactive Python
 
 ## Properties
 
@@ -3342,7 +3450,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Run all the above cells in Interactive Python
 
 ## Properties
 
@@ -3456,7 +3566,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Run a Cell in Interactive Python
 
 ## Properties
 
@@ -3475,7 +3587,9 @@ Event can be removed. Not referenced anywhere
 ## Description
 
 
-No description provided
+
+
+ Run current cell and all below in Interactive Python
 
 ## Properties
 
@@ -3559,7 +3673,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Run the current Cell in Interactive Python
 
 ## Properties
 
@@ -3615,7 +3731,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Run current cell and advance cursor in Interactive Python
 
 ## Properties
 
@@ -3727,7 +3845,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Run file in Interactive Python
 
 ## Properties
 
@@ -3993,7 +4113,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Run a Selection or Line in Interactive Python
 
 ## Properties
 
@@ -4808,102 +4930,6 @@ Event can be removed. Not referenced anywhere
 
 </details>
 <details>
-  <summary>DATASCIENCE.VSCODE_NATIVE.CHANGE_TO_CODE</summary>
-
-## Description
-
-
-No description provided
-
-## Properties
-
-
-No properties for event
-
-
-## Locations Used
-
-Event can be removed. Not referenced anywhere
-
-</details>
-<details>
-  <summary>DATASCIENCE.VSCODE_NATIVE.CHANGE_TO_MARKDOWN</summary>
-
-## Description
-
-
-No description provided
-
-## Properties
-
-
-No properties for event
-
-
-## Locations Used
-
-Event can be removed. Not referenced anywhere
-
-</details>
-<details>
-  <summary>DATASCIENCE.VSCODE_NATIVE.DELETE_CELL</summary>
-
-## Description
-
-
-No description provided
-
-## Properties
-
-
-No properties for event
-
-
-## Locations Used
-
-Event can be removed. Not referenced anywhere
-
-</details>
-<details>
-  <summary>DATASCIENCE.VSCODE_NATIVE.INSERT_CELL</summary>
-
-## Description
-
-
-
- Native notebooks events
-
-## Properties
-
-
-No properties for event
-
-
-## Locations Used
-
-Event can be removed. Not referenced anywhere
-
-</details>
-<details>
-  <summary>DATASCIENCE.VSCODE_NATIVE.MOVE_CELL</summary>
-
-## Description
-
-
-No description provided
-
-## Properties
-
-
-No properties for event
-
-
-## Locations Used
-
-Event can be removed. Not referenced anywhere
-
-</details>
-<details>
   <summary>DATAVIEWER.USING_INTERPRETER</summary>
 
 ## Description
@@ -5487,13 +5513,13 @@ No properties for event
 
 [src/kernels/raw/session/hostRawNotebookProvider.node.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/raw/session/hostRawNotebookProvider.node.ts)
 ```typescript
-                kernelConnection.kind === 'startUsingLocalKernelSpec'
-            ) {
                 if (!kernelConnection.interpreter) {
-                    sendTelemetryEvent(Telemetry.AttemptedToLaunchRawKernelWithoutInterpreter, undefined, {
-                        pythonExtensionInstalled: this.extensionChecker.isPythonExtensionInstalled
-                    });
-                }
+                    sendKernelTelemetryEvent(
+                        resource,
+                        Telemetry.AttemptedToLaunchRawKernelWithoutInterpreter,
+                        undefined,
+                        {
+                            pythonExtensionInstalled: this.extensionChecker.isPythonExtensionInstalled
 ```
 
 </details>
@@ -5506,7 +5532,7 @@ No properties for event
 
 
  Telemetry sent to capture first time execution of a cell.
- If `notebook = true`, this its telemetry for native editor/notebooks.
+ If `notebook = true`, this its telemetry for Jupyter notebooks, else applies to IW.
 
 ## Properties
 
@@ -5518,13 +5544,13 @@ No properties for event
 
 [src/kernels/execution/cellExecution.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/execution/cellExecution.ts)
 ```typescript
-        const props = { notebook: true };
-        if (!CellExecution.sentExecuteCellTelemetry) {
             CellExecution.sentExecuteCellTelemetry = true;
-            sendTelemetryEvent(Telemetry.ExecuteCellPerceivedCold, this.stopWatchForTelemetry.elapsedTime, props);
-        } else {
-            sendTelemetryEvent(Telemetry.ExecuteCellPerceivedWarm, this.stopWatchForTelemetry.elapsedTime, props);
-        }
+            sendKernelTelemetryEvent(
+                this.resourceUri,
+                Telemetry.ExecuteCellPerceivedCold,
+                this.stopWatchForTelemetry.elapsedTime,
+                props
+            );
 ```
 
 
@@ -5550,6 +5576,7 @@ No properties for event
 
  Telemetry sent to capture subsequent execution of a cell.
  If `notebook = true`, this its telemetry for native editor/notebooks.
+ (Note: The property `notebook` only gets sent correctly in Jupyter version 2022.8.0 or later)
 
 ## Properties
 
@@ -5561,13 +5588,13 @@ No properties for event
 
 [src/kernels/execution/cellExecution.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/execution/cellExecution.ts)
 ```typescript
-            CellExecution.sentExecuteCellTelemetry = true;
-            sendTelemetryEvent(Telemetry.ExecuteCellPerceivedCold, this.stopWatchForTelemetry.elapsedTime, props);
         } else {
-            sendTelemetryEvent(Telemetry.ExecuteCellPerceivedWarm, this.stopWatchForTelemetry.elapsedTime, props);
-        }
-    }
-    private canExecuteCell() {
+            sendKernelTelemetryEvent(
+                this.resourceUri,
+                Telemetry.ExecuteCellPerceivedWarm,
+                this.stopWatchForTelemetry.elapsedTime,
+                props
+            );
 ```
 
 
@@ -6067,7 +6094,10 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ User interrupts a cell
+ Identical to `Telemetry.Interrupt`
 
 ## Properties
 
@@ -6994,6 +7024,18 @@ No description provided
 ```
 
 
+[src/kernels/jupyter/finder/remoteKernelFinder.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/jupyter/finder/remoteKernelFinder.ts)
+```typescript
+    }
+
+    // Talk to the remote server to determine sessions
+    @captureTelemetry(Telemetry.KernelListingPerf, { kind: 'remote' })
+    public async listKernelsFromConnection(
+        _resource: Resource,
+        connInfo: INotebookProviderConnection
+```
+
+
 [src/kernels/raw/finder/localKernelFinder.node.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/raw/finder/localKernelFinder.node.ts)
 ```typescript
      * Search all our local file system locations for installed kernel specs and return them
@@ -7003,18 +7045,6 @@ No description provided
     public async listKernels(
         resource: Resource,
         @ignoreLogging() cancelToken?: CancellationToken
-```
-
-
-[src/kernels/jupyter/remoteKernelFinder.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/jupyter/remoteKernelFinder.ts)
-```typescript
-    ) {}
-
-    // Talk to the remote server to determine sessions
-    @captureTelemetry(Telemetry.KernelListingPerf, { kind: 'remote' })
-    public async listKernels(
-        _resource: Resource,
-        connInfo: INotebookProviderConnection,
 ```
 
 </details>
@@ -7203,11 +7233,15 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Total number of Jupyter notebooks or IW opened. Telemetry Sent when VS Code is closed.
 
 ## Properties
 
--  count: number
+
+No properties for event
+
 
 ## Locations Used
 
@@ -7248,11 +7282,15 @@ Event can be removed. Not referenced anywhere
 ## Description
 
 
-No description provided
+
+
+ Total number of cells executed. Telemetry Sent when VS Code is closed.
 
 ## Properties
 
--  count: number
+
+No properties for event
+
 
 ## Locations Used
 
@@ -7350,6 +7388,7 @@ Event can be removed. Not referenced anywhere
 
 
  Time take for jupyter server to start and be ready to run first user cell.
+ (Note: The property `notebook` only gets sent correctly in Jupyter version 2022.8.0 or later)
 
 ## Properties
 
@@ -7361,25 +7400,25 @@ No properties for event
 
 [src/kernels/kernel.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/kernel.ts)
 ```typescript
-
-            sendKernelTelemetryEvent(
-                this.resourceUri,
-                Telemetry.PerceivedJupyterStartupNotebook,
-                stopWatch.elapsedTime
-            );
-            this._session = session;
+                .then((session) => {
+                    sendKernelTelemetryEvent(
+                        this.resourceUri,
+                        Telemetry.PerceivedJupyterStartupNotebook,
+                        stopWatch.elapsedTime
+                    );
+                    return session;
 ```
 
 
 [src/kernels/kernel.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/kernel.ts)
 ```typescript
-        // Setup telemetry
-        if (!this.perceivedJupyterStartupTelemetryCaptured) {
             this.perceivedJupyterStartupTelemetryCaptured = true;
-            sendTelemetryEvent(Telemetry.PerceivedJupyterStartupNotebook, stopWatch.elapsedTime);
+            sendKernelTelemetryEvent(
+                this.resourceUri,
+                Telemetry.PerceivedJupyterStartupNotebook,
+                stopWatch.elapsedTime
+            );
             executionPromise
-                .finally(() =>
-                    sendTelemetryEvent(Telemetry.StartExecuteNotebookCellPerceivedCold, stopWatch.elapsedTime)
 ```
 
 </details>
@@ -7680,7 +7719,7 @@ No description provided
         const productNameForTelemetry = products.map((product) => ProductNames.get(product)!).join(', ');
         const resourceType = resource ? getResourceType(resource) : undefined;
         const resourceHash = resource ? getTelemetrySafeHashedString(resource.toString()) : undefined;
-        sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
+        sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
             action: 'displayed',
             moduleName: productNameForTelemetry,
             resourceType,
@@ -7692,7 +7731,7 @@ No description provided
 
         try {
             if (!this.isCodeSpace) {
-                sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
+                sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
                     action: 'prompted',
                     moduleName: productNameForTelemetry,
                     resourceType,
@@ -7704,7 +7743,7 @@ No description provided
                       ]);
 
                 if (selection === moreInfoOption) {
-                    sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
+                    sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
                         action: 'moreInfo',
                         moduleName: productNameForTelemetry,
                         resourceType,
@@ -7716,7 +7755,7 @@ No description provided
                 // "More Info" isn't a full valid response here, so reprompt after showing it
             } while (selection === moreInfoOption);
             if (cancelTokenSource.token.isCancellationRequested) {
-                sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
+                sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
                     action: 'dismissed',
                     moduleName: productNameForTelemetry,
                     resourceType,
@@ -7728,7 +7767,7 @@ No description provided
                 return KernelInterpreterDependencyResponse.cancel;
             }
             if (selection === selectKernelOption) {
-                sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
+                sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
                     action: 'differentKernel',
                     moduleName: productNameForTelemetry,
                     resourceType,
@@ -7740,7 +7779,7 @@ No description provided
                 });
                 return KernelInterpreterDependencyResponse.selectDifferentKernel;
             } else if (selection === installOption) {
-                sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
+                sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
                     action: 'install',
                     moduleName: productNameForTelemetry,
                     resourceType,
@@ -7752,7 +7791,7 @@ No description provided
                     cancellationPromise
                 ]);
                 if (response === InstallerResponse.Installed) {
-                    sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
+                    sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
                         action: 'installed',
                         moduleName: productNameForTelemetry,
                         resourceType,
@@ -7764,7 +7803,7 @@ No description provided
                     });
                     return KernelInterpreterDependencyResponse.ok;
                 } else if (response === InstallerResponse.Ignore) {
-                    sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
+                    sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
                         action: 'failed',
                         moduleName: productNameForTelemetry,
                         resourceType,
@@ -7776,7 +7815,7 @@ No description provided
                     return KernelInterpreterDependencyResponse.failed; // Happens when errors in pip or conda.
                 }
             }
-            sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
+            sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
                 action: 'dismissed',
                 moduleName: productNameForTelemetry,
                 resourceType,
@@ -7788,7 +7827,7 @@ No description provided
             return KernelInterpreterDependencyResponse.cancel;
         } catch (ex) {
             traceError(`Failed to install ${productNameForTelemetry}`, ex);
-            sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
+            sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
                 action: 'error',
                 moduleName: productNameForTelemetry,
                 resourceType,
@@ -7891,7 +7930,7 @@ No properties for event
 
 ## Locations Used
 
-[src/kernels/kernelFinder.base.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/kernelFinder.base.ts)
+[src/notebooks/controllers/kernelRanking/kernelRankingHelper.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/notebooks/controllers/kernelRanking/kernelRankingHelper.ts)
 ```typescript
     ) {}
 
@@ -7899,7 +7938,7 @@ No properties for event
     @captureTelemetry(Telemetry.RankKernelsPerf)
     public async rankKernels(
         resource: Resource,
-        notebookMetadata?: nbformat.INotebookMetadata,
+        notebookMetadata?: INotebookMetadata | undefined,
 ```
 
 </details>
@@ -7958,7 +7997,7 @@ No properties for event
         } else {
             traceWarning(`Didn't get response for requestKernelInfo after ${stopWatch.elapsedTime}ms.`);
         }
-        sendTelemetryEvent(Telemetry.RawKernelInfoResonse, stopWatch.elapsedTime, {
+        sendKernelTelemetryEvent(this.resource, Telemetry.RawKernelInfoResonse, stopWatch.elapsedTime, {
             attempts,
             timedout: !gotIoPubMessage.completed
         });
@@ -8045,7 +8084,7 @@ No properties for event
     public async dispose() {
         // We want to know who called dispose on us
         const stacktrace = new Error().stack;
-        sendTelemetryEvent(Telemetry.RawKernelSessionDisposed, undefined, { stacktrace });
+        sendKernelTelemetryEvent(this.resource, Telemetry.RawKernelSessionDisposed, undefined, { stacktrace });
 
         // Now actually dispose ourselves
         this.isDisposing = true;
@@ -8076,7 +8115,7 @@ No properties for event
 
         const disposable = kernelProcess.exited(
             ({ exitCode, reason }) => {
-                sendTelemetryEvent(Telemetry.RawKernelSessionKernelProcessExited, undefined, {
+                sendKernelTelemetryEvent(resource, Telemetry.RawKernelSessionKernelProcessExited, undefined, {
                     exitCode,
                     exitReason: getTelemetrySafeErrorMessageFromPythonTraceback(reason)
                 });
@@ -8088,7 +8127,7 @@ No properties for event
         traceError(`Disposing session as kernel process died ExitCode: ${e.exitCode}, Reason: ${e.reason}`);
         // Send telemetry so we know why the kernel process exited,
         // as this affects our kernel startup success
-        sendTelemetryEvent(Telemetry.RawKernelSessionKernelProcessExited, undefined, {
+        sendKernelTelemetryEvent(this.resource, Telemetry.RawKernelSessionKernelProcessExited, undefined, {
             exitCode: e.exitCode,
             exitReason: getTelemetrySafeErrorMessageFromPythonTraceback(e.reason)
         });
@@ -8100,7 +8139,7 @@ No properties for event
             if (session !== this.session) {
                 return;
             }
-            sendTelemetryEvent(Telemetry.RawKernelSessionKernelProcessExited, undefined, {
+            sendKernelTelemetryEvent(this.resource, Telemetry.RawKernelSessionKernelProcessExited, undefined, {
                 exitCode,
                 exitReason: getTelemetrySafeErrorMessageFromPythonTraceback(reason)
             });
@@ -8159,7 +8198,7 @@ No properties for event
         // We want to know why we got shut down
         const stacktrace = new Error().stack;
         return super.shutdownSession(session, statusHandler, isRequestToShutdownRestartSession).then(() => {
-            sendTelemetryEvent(Telemetry.RawKernelSessionShutdown, undefined, {
+            sendKernelTelemetryEvent(this.resource, Telemetry.RawKernelSessionShutdown, undefined, {
                 isRequestToShutdownRestartSession,
                 stacktrace
             });
@@ -8405,7 +8444,10 @@ Event can be removed. Not referenced anywhere
 ## Description
 
 
-No description provided
+
+
+ Total time taken to restart a kernel.
+ Identical to `Telemetry.RestartKernel`
 
 ## Properties
 
@@ -8433,7 +8475,10 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Total time taken to restart a kernel.
+ Identical to `Telemetry.RestartJupyterTime`
 
 ## Properties
 
@@ -8799,13 +8844,13 @@ No properties for event
 
 [src/kernels/kernel.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/kernels/kernel.ts)
 ```typescript
-            sendTelemetryEvent(Telemetry.PerceivedJupyterStartupNotebook, stopWatch.elapsedTime);
-            executionPromise
                 .finally(() =>
-                    sendTelemetryEvent(Telemetry.StartExecuteNotebookCellPerceivedCold, stopWatch.elapsedTime)
+                    sendKernelTelemetryEvent(
+                        this.resourceUri,
+                        Telemetry.StartExecuteNotebookCellPerceivedCold,
+                        stopWatch.elapsedTime
+                    )
                 )
-                .catch(noop);
-        }
 ```
 
 </details>
@@ -8896,7 +8941,10 @@ export class JupyterSessionStartError extends WrappedError {
 ## Description
 
 
-No description provided
+
+
+ Triggered when the kernel selection changes (note: This can also happen automatically when a notebook is opened).
+ WARNING: Due to changes in VS Code, this isn't necessarily a user action, hence difficult to tell if the user changed it or it changed automatically.
 
 ## Properties
 
@@ -8943,6 +8991,97 @@ No description provided
 -  language: string
 
 ## Locations Used
+
+[src/telemetry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/telemetry.ts)
+```typescript
+     * Similar to Telemetry.SwitchKernel, but doesn't contain as much information as Telemetry.SwitchKernel.
+     * WARNING: Due to changes in VS Code, this isn't necessarily a user action, hence difficult to tell if the user changed it or it changed automatically.
+     */
+    [Telemetry.SwitchToExistingKernel]: { language: string };
+    [Telemetry.SwitchToInterpreterAsKernel]: never | undefined;
+    /**
+     * Total time taken to interrupt a kernel
+```
+
+
+[src/notebooks/telemetry/notebookOrKernelLanguageTelemetry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/notebooks/telemetry/notebookOrKernelLanguageTelemetry.ts)
+```typescript
+import { getTelemetrySafeLanguage } from '../../platform/telemetry/helpers';
+
+export function sendNotebookOrKernelLanguageTelemetry(
+    telemetryEvent: Telemetry.SwitchToExistingKernel | Telemetry.NotebookLanguage,
+    language?: string
+) {
+    language = getTelemetrySafeLanguage(language);
+```
+
+
+[src/notebooks/controllers/vscodeNotebookController.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/notebooks/controllers/vscodeNotebookController.ts)
+```typescript
+        }
+        switch (this.connection.kind) {
+            case 'startUsingPythonInterpreter':
+                sendNotebookOrKernelLanguageTelemetry(Telemetry.SwitchToExistingKernel, PYTHON_LANGUAGE);
+                break;
+            case 'connectToLiveRemoteKernel':
+                sendNotebookOrKernelLanguageTelemetry(
+```
+
+
+[src/notebooks/controllers/vscodeNotebookController.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/notebooks/controllers/vscodeNotebookController.ts)
+```typescript
+                break;
+            case 'connectToLiveRemoteKernel':
+                sendNotebookOrKernelLanguageTelemetry(
+                    Telemetry.SwitchToExistingKernel,
+                    this.connection.kernelModel.language
+                );
+                break;
+```
+
+
+[src/notebooks/controllers/vscodeNotebookController.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/notebooks/controllers/vscodeNotebookController.ts)
+```typescript
+            case 'startUsingLocalKernelSpec':
+            case 'startUsingRemoteKernelSpec':
+                sendNotebookOrKernelLanguageTelemetry(
+                    Telemetry.SwitchToExistingKernel,
+                    this.connection.kernelSpec.language
+                );
+                break;
+```
+
+</details>
+<details>
+  <summary>DS_INTERNAL.SWITCH_TO_EXISTING_KERNEL</summary>
+
+## Description
+
+
+
+
+ Similar to Telemetry.SwitchKernel, but doesn't contain as much information as Telemetry.SwitchKernel.
+ WARNING: Due to changes in VS Code, this isn't necessarily a user action, hence difficult to tell if the user changed it or it changed automatically.
+
+## Properties
+
+
+No properties for event
+
+
+## Locations Used
+
+[src/telemetry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/telemetry.ts)
+```typescript
+    [Telemetry.RegisterAndUseInterpreterAsKernel]: never | undefined;
+    [Telemetry.UseInterpreterAsKernel]: never | undefined;
+    [Telemetry.UseExistingKernel]: never | undefined;
+    [Telemetry.SwitchToExistingKernel]: { language: string };
+    [Telemetry.SwitchToInterpreterAsKernel]: never | undefined;
+    [Telemetry.ConvertToPythonFile]: never | undefined;
+    [Telemetry.CopySourceCode]: never | undefined;
+```
+
 
 [src/notebooks/telemetry/notebookOrKernelLanguageTelemetry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/notebooks/telemetry/notebookOrKernelLanguageTelemetry.ts)
 ```typescript
@@ -9008,7 +9147,44 @@ No properties for event
 
 ## Locations Used
 
-Event can be removed. Not referenced anywhere
+[src/telemetry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/telemetry.ts)
+```typescript
+     * WARNING: Due to changes in VS Code, this isn't necessarily a user action, hence difficult to tell if the user changed it or it changed automatically.
+     */
+    [Telemetry.SwitchToExistingKernel]: { language: string };
+    [Telemetry.SwitchToInterpreterAsKernel]: never | undefined;
+    /**
+     * Total time taken to interrupt a kernel
+     * Check the `resourceType` to determine whether its a Jupyter Notebook or IW.
+```
+
+</details>
+<details>
+  <summary>DS_INTERNAL.SWITCH_TO_INTERPRETER_AS_KERNEL</summary>
+
+## Description
+
+
+No description provided
+
+## Properties
+
+
+No properties for event
+
+
+## Locations Used
+
+[src/telemetry.ts](https://github.com/microsoft/vscode-jupyter/tree/main/src/telemetry.ts)
+```typescript
+    [Telemetry.UseInterpreterAsKernel]: never | undefined;
+    [Telemetry.UseExistingKernel]: never | undefined;
+    [Telemetry.SwitchToExistingKernel]: { language: string };
+    [Telemetry.SwitchToInterpreterAsKernel]: never | undefined;
+    [Telemetry.ConvertToPythonFile]: never | undefined;
+    [Telemetry.CopySourceCode]: never | undefined;
+    [Telemetry.CreateNewNotebook]: never | undefined;
+```
 
 </details>
 <details>
@@ -9728,7 +9904,9 @@ No properties for event
 ## Description
 
 
-No description provided
+
+
+ Telemetry event sent when user opens the data viewer.
 
 ## Properties
 

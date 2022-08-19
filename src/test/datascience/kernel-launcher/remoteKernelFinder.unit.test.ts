@@ -1,6 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use strict';
 
 import type { Session } from '@jupyterlab/services';
@@ -14,15 +16,14 @@ import { noop } from '../../core';
 import {
     IJupyterConnection,
     IJupyterKernelSpec,
-    IKernelFinder,
     KernelConnectionMetadata,
     LiveRemoteKernelConnectionMetadata
 } from '../../../kernels/types';
 import { IInterpreterService } from '../../../platform/interpreter/contracts';
 import { JupyterSessionManager } from '../../../kernels/jupyter/session/jupyterSessionManager';
 import { JupyterSessionManagerFactory } from '../../../kernels/jupyter/session/jupyterSessionManagerFactory';
-import { RemoteKernelFinder } from '../../../kernels/jupyter/remoteKernelFinder';
-import { ILocalKernelFinder, IRemoteKernelFinder } from '../../../kernels/raw/types';
+import { RemoteKernelFinder } from '../../../kernels/jupyter/finder/remoteKernelFinder';
+import { ILocalKernelFinder } from '../../../kernels/raw/types';
 import {
     ActiveKernelIdList,
     PreferredRemoteKernelIdProvider
@@ -31,9 +32,10 @@ import {
     IJupyterKernel,
     IJupyterRemoteCachedKernelValidator,
     IJupyterSessionManager,
+    IRemoteKernelFinder,
     IServerConnectionType
 } from '../../../kernels/jupyter/types';
-import { KernelFinder } from '../../../kernels/kernelFinder.node';
+import { KernelFinder } from '../../../kernels/kernelFinder';
 import { NotebookProvider } from '../../../kernels/jupyter/launcher/notebookProvider';
 import { PythonExtensionChecker } from '../../../platform/api/pythonApi';
 import { LocalKernelFinder } from '../../../kernels/raw/finder/localKernelFinder.node';
@@ -41,15 +43,18 @@ import { IFileSystemNode } from '../../../platform/common/platform/types.node';
 import { JupyterServerUriStorage } from '../../../kernels/jupyter/launcher/serverUriStorage';
 import { FileSystem } from '../../../platform/common/platform/fileSystem.node';
 import { takeTopRankKernel } from './localKernelFinder.unit.test';
-import { LocalKernelSpecsCacheKey, RemoteKernelSpecsCacheKey } from '../../../kernels/kernelFinder.base';
 import { IApplicationEnvironment } from '../../../platform/common/application/types';
+import { LocalKernelSpecsCacheKey, RemoteKernelSpecsCacheKey } from '../../../kernels/common/commonFinder';
+import { IKernelRankingHelper } from '../../../notebooks/controllers/types';
+import { KernelRankingHelper } from '../../../notebooks/controllers/kernelRanking/kernelRankingHelper';
 
 suite(`Remote Kernel Finder`, () => {
     let disposables: Disposable[] = [];
     let preferredRemoteKernelIdProvider: PreferredRemoteKernelIdProvider;
     let remoteKernelFinder: IRemoteKernelFinder;
     let localKernelFinder: ILocalKernelFinder;
-    let kernelFinder: IKernelFinder;
+    let kernelFinder: KernelFinder;
+    let kernelRankHelper: IKernelRankingHelper;
     let fs: IFileSystemNode;
     let memento: Memento;
     let jupyterSessionManager: IJupyterSessionManager;
@@ -140,14 +145,6 @@ suite(`Remote Kernel Finder`, () => {
         when(localKernelFinder.listKernels(anything(), anything())).thenResolve([]);
         const extensionChecker = mock(PythonExtensionChecker);
         when(extensionChecker.isPythonExtensionInstalled).thenReturn(true);
-
-        remoteKernelFinder = new RemoteKernelFinder(
-            instance(jupyterSessionManagerFactory),
-            instance(interpreterService),
-            instance(extensionChecker),
-            false
-        );
-
         const notebookProvider = mock(NotebookProvider);
         when(notebookProvider.connect(anything())).thenResolve(connInfo);
         fs = mock(FileSystem);
@@ -165,17 +162,21 @@ suite(`Remote Kernel Finder`, () => {
         when(cachedRemoteKernelValidator.isValid(anything())).thenResolve(true);
         const env = mock<IApplicationEnvironment>();
         when(env.extensionVersion).thenReturn('');
-        kernelFinder = new KernelFinder(
-            instance(localKernelFinder),
-            remoteKernelFinder,
-            preferredRemoteKernelIdProvider,
+        kernelFinder = new KernelFinder();
+        kernelRankHelper = new KernelRankingHelper(kernelFinder, preferredRemoteKernelIdProvider);
+
+        remoteKernelFinder = new RemoteKernelFinder(
+            instance(jupyterSessionManagerFactory),
+            instance(interpreterService),
+            instance(extensionChecker),
             instance(notebookProvider),
-            instance(memento),
-            instance(fs),
             instance(serverUriStorage),
             instance(connectionType),
+            instance(memento),
+            instance(env),
             instance(cachedRemoteKernelValidator),
-            instance(env)
+            kernelFinder,
+            false
         );
     });
     teardown(() => {
@@ -190,7 +191,7 @@ suite(`Remote Kernel Finder`, () => {
             juliaSpec,
             interpreterSpec
         ]);
-        const kernels = await remoteKernelFinder.listKernels(undefined, connInfo);
+        const kernels = await remoteKernelFinder.listKernelsFromConnection(undefined, connInfo);
         assert.equal(kernels.length, 4, 'Not enough kernels returned');
         assert.equal(
             getDisplayNameOrNameOfKernelConnection(kernels[0]),
@@ -217,7 +218,7 @@ suite(`Remote Kernel Finder`, () => {
             juliaSpec,
             interpreterSpec
         ]);
-        const kernels = await remoteKernelFinder.listKernels(undefined, connInfo);
+        const kernels = await remoteKernelFinder.listKernelsFromConnection(undefined, connInfo);
         const liveKernels = kernels.filter((k) => k.kind === 'connectToLiveRemoteKernel');
         assert.equal(liveKernels.length, 3, 'Live kernels not found');
     });
@@ -232,21 +233,21 @@ suite(`Remote Kernel Finder`, () => {
         ]);
 
         // Try python
-        let kernel = await kernelFinder.rankKernels(undefined, {
+        let kernel = await kernelRankHelper.rankKernels(undefined, {
             language_info: { name: PYTHON_LANGUAGE },
             orig_nbformat: 4
         });
         assert.ok(kernel, 'No python kernel found matching notebook metadata');
 
         // Julia
-        kernel = await kernelFinder.rankKernels(undefined, {
+        kernel = await kernelRankHelper.rankKernels(undefined, {
             language_info: { name: 'julia' },
             orig_nbformat: 4
         });
         assert.ok(kernel, 'No julia kernel found matching notebook metadata');
 
         // Python 2
-        kernel = await kernelFinder.rankKernels(undefined, {
+        kernel = await kernelRankHelper.rankKernels(undefined, {
             kernelspec: {
                 display_name: 'Python 2 on Disk',
                 name: 'python2'
@@ -276,7 +277,7 @@ suite(`Remote Kernel Finder`, () => {
         const uri = Uri.file('/usr/foobar/foo.ipynb');
         await preferredRemoteKernelIdProvider.storePreferredRemoteKernelId(uri, '2');
 
-        const kernel = takeTopRankKernel(await kernelFinder.rankKernels(uri));
+        const kernel = takeTopRankKernel(await kernelRankHelper.rankKernels(uri));
         assert.ok(kernel, 'Kernel not found for uri');
         assert.equal(kernel?.kind, 'connectToLiveRemoteKernel', 'Live kernel not found');
         assert.equal(

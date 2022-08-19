@@ -1,8 +1,9 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { inject, injectable } from 'inversify';
 import { getDisplayPath } from '../../platform/common/platform/fs-paths';
 import { Resource } from '../../platform/common/types';
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
 
 import { IInterpreterQuickPickItem, IInterpreterSelector } from '../../platform/interpreter/configuration/types';
 import { IInterpreterService } from '../../platform/interpreter/contracts';

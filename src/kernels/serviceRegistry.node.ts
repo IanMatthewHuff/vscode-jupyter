@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 import * as vscode from 'vscode';
 import { IExtensionSingleActivationService, IExtensionSyncActivationService } from '../platform/activation/types';
@@ -11,7 +12,6 @@ import { setSharedProperty } from '../telemetry';
 import { registerInstallerTypes } from './installer/serviceRegistry.node';
 import { KernelDependencyService } from './kernelDependencyService.node';
 import { JupyterPaths } from './raw/finder/jupyterPaths.node';
-import { LocalKernelFinder } from './raw/finder/localKernelFinder.node';
 import { LocalKnownPathKernelSpecFinder } from './raw/finder/localKnownPathKernelSpecFinder.node';
 import { LocalPythonAndRelatedNonPythonKernelSpecFinder } from './raw/finder/localPythonAndRelatedNonPythonKernelSpecFinder.node';
 import { PreferredRemoteKernelIdProvider } from './jupyter/preferredRemoteKernelIdProvider';
@@ -19,7 +19,7 @@ import { KernelEnvironmentVariablesService } from './raw/launcher/kernelEnvVarsS
 import { KernelLauncher } from './raw/launcher/kernelLauncher.node';
 import { HostRawNotebookProvider } from './raw/session/hostRawNotebookProvider.node';
 import { RawNotebookSupportedService } from './raw/session/rawNotebookSupportedService.node';
-import { IKernelLauncher, ILocalKernelFinder, IRawNotebookProvider, IRawNotebookSupportedService } from './raw/types';
+import { IKernelLauncher, IRawNotebookProvider, IRawNotebookSupportedService } from './raw/types';
 import { JupyterVariables } from './variables/jupyterVariables';
 import { KernelVariables } from './variables/kernelVariables';
 import { PreWarmActivatedJupyterEnvironmentVariables } from './variables/preWarmVariables.node';
@@ -36,12 +36,17 @@ import { KernelCrashMonitor } from './kernelCrashMonitor';
 import { KernelAutoRestartMonitor } from './kernelAutoRestartMonitor.node';
 import { registerTypes as registerJupyterTypes } from './jupyter/serviceRegistry.node';
 import { KernelProvider, ThirdPartyKernelProvider } from './kernelProvider.node';
-import { KernelFinder } from './kernelFinder.node';
+import { KernelFinder } from './kernelFinder';
 import { CellOutputDisplayIdTracker } from './execution/cellDisplayIdTracker';
 import { Activation } from './activation.node';
-import { PortAttributesProviders } from './port/portAttributeProvider.node';
+import { PortAttributesProviders } from './raw/port/portAttributeProvider.node';
 import { ServerPreload } from './jupyter/launcher/serverPreload.node';
 import { KernelStartupCodeProvider } from './kernelStartupCodeProvider.node';
+import { KernelAutoReConnectFailedMonitor } from './kernelAutoReConnectFailedMonitor';
+import { KernelAutoReconnectMonitor } from './kernelAutoReConnectMonitor';
+import { PythonKernelInterruptDaemon } from './raw/finder/pythonKernelInterruptDaemon.node';
+import { LocalKernelFinder } from './raw/finder/localKernelFinder.node';
+import { DebugStartupCodeProvider } from './debuggerStartupCodeProvider';
 
 export function registerTypes(serviceManager: IServiceManager, isDevMode: boolean) {
     serviceManager.addSingleton<IExtensionSingleActivationService>(IExtensionSingleActivationService, Activation);
@@ -64,7 +69,12 @@ export function registerTypes(serviceManager: IServiceManager, isDevMode: boolea
         KernelEnvironmentVariablesService,
         KernelEnvironmentVariablesService
     );
-    serviceManager.addSingleton<ILocalKernelFinder>(ILocalKernelFinder, LocalKernelFinder);
+    serviceManager.addSingleton<IKernelFinder>(IKernelFinder, KernelFinder);
+    serviceManager.addSingleton<IExtensionSingleActivationService>(
+        IExtensionSingleActivationService,
+        LocalKernelFinder
+    );
+
     serviceManager.addSingleton<JupyterPaths>(JupyterPaths, JupyterPaths);
     serviceManager.addSingleton<LocalKnownPathKernelSpecFinder>(
         LocalKnownPathKernelSpecFinder,
@@ -89,11 +99,18 @@ export function registerTypes(serviceManager: IServiceManager, isDevMode: boolea
     serviceManager.addSingleton<IExtensionSyncActivationService>(IExtensionSyncActivationService, KernelCrashMonitor);
     serviceManager.addSingleton<IExtensionSyncActivationService>(
         IExtensionSyncActivationService,
+        KernelAutoReConnectFailedMonitor
+    );
+    serviceManager.addSingleton<IExtensionSyncActivationService>(
+        IExtensionSyncActivationService,
+        KernelAutoReconnectMonitor
+    );
+    serviceManager.addSingleton<IExtensionSyncActivationService>(
+        IExtensionSyncActivationService,
         KernelAutoRestartMonitor
     );
     serviceManager.addSingleton<IKernelProvider>(IKernelProvider, KernelProvider);
     serviceManager.addSingleton<IThirdPartyKernelProvider>(IThirdPartyKernelProvider, ThirdPartyKernelProvider);
-    serviceManager.addSingleton<IKernelFinder>(IKernelFinder, KernelFinder);
 
     // Subdirectories
     registerJupyterTypes(serviceManager, isDevMode);
@@ -118,4 +135,6 @@ export function registerTypes(serviceManager: IServiceManager, isDevMode: boolea
     serviceManager.addSingleton<CellOutputDisplayIdTracker>(CellOutputDisplayIdTracker, CellOutputDisplayIdTracker);
 
     serviceManager.addSingleton<IStartupCodeProvider>(IStartupCodeProvider, KernelStartupCodeProvider);
+    serviceManager.addSingleton<IStartupCodeProvider>(IStartupCodeProvider, DebugStartupCodeProvider);
+    serviceManager.addSingleton<PythonKernelInterruptDaemon>(PythonKernelInterruptDaemon, PythonKernelInterruptDaemon);
 }

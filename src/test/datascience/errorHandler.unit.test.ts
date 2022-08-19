@@ -1,8 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use strict';
-import * as dedent from 'dedent';
+import dedent from 'dedent';
 import { assert } from 'chai';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { Uri, WorkspaceFolder } from 'vscode';
@@ -15,7 +17,7 @@ import {
     KernelConnectionMetadata,
     KernelInterpreterDependencyResponse,
     RemoteKernelSpecConnectionMetadata
-} from '../../platform/../kernels/types';
+} from '../../kernels/types';
 import { PythonEnvironment, EnvironmentType } from '../../platform/pythonEnvironments/info';
 import { JupyterInterpreterService } from '../../kernels/jupyter/interpreter/jupyterInterpreterService.node';
 import { DataScienceErrorHandler } from '../../kernels/errors/kernelErrorHandler';

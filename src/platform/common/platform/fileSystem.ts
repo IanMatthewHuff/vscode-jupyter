@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -9,7 +9,7 @@ import { IExtensionContext, IHttpClient } from '../types';
 import { getHashString } from './fileUtils';
 import { IFileSystem, TemporaryFileUri } from './types';
 import * as uriPath from '../../vscode-path/resources';
-import * as uuid from 'uuid/v4';
+import uuid from 'uuid/v4';
 import { isFileNotFoundError } from './errors';
 import { traceError } from '../../logging';
 

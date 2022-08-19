@@ -1,9 +1,10 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 import { assert } from 'chai';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { Uri } from 'vscode';
-import { IKernel } from '../../../platform/../kernels/types';
+import { IKernel } from '../../../kernels/types';
 import { LocalWidgetScriptSourceProvider } from '../../../notebooks/controllers/ipywidgets/scriptSourceProvider/localWidgetScriptSourceProvider.node';
 import {
     ILocalResourceUriConverter,

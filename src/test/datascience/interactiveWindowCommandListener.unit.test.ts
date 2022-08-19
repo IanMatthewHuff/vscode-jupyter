@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 export const __ = '';
 // import { nbformat } from '@jupyterlab/coreutils/lib/nbformat';
@@ -7,7 +8,7 @@ export const __ = '';
 // import { anything, instance, mock, verify, when } from 'ts-mockito';
 // import { Matcher } from 'ts-mockito/lib/matcher/type/Matcher';
 // import * as TypeMoq from 'typemoq';
-// import * as uuid from 'uuid/v4';
+// import uuid from 'uuid/v4';
 // import { EventEmitter, Uri } from 'vscode';
 // import { ApplicationShell } from '../../platform/common/application/applicationShell';
 // import { IApplicationShell } from '../../platform/common/application/types';

@@ -1,8 +1,9 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 import * as ts from 'typescript';
 import * as fs from 'fs-extra';
-import * as glob from 'glob';
+import glob from 'glob';
 
 /**
  * A TypeScript language service host

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 /* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports, no-invalid-this, @typescript-eslint/no-explicit-any */
@@ -55,7 +55,7 @@ import {
     IsWebExtension
 } from '../../../platform/common/types';
 import { createDeferred, sleep } from '../../../platform/common/utils/async';
-import { IKernelProvider } from '../../../platform/../kernels/types';
+import { IKernelProvider } from '../../../kernels/types';
 import { noop } from '../../core';
 import { closeActiveWindows, isInsiders } from '../../initialize';
 import { DebugProtocol } from 'vscode-debugprotocol';
@@ -73,7 +73,7 @@ import {
 } from '../../../notebooks/controllers/types';
 import { IS_SMOKE_TEST } from '../../constants';
 import * as urlPath from '../../../platform/vscode-path/resources';
-import * as uuid from 'uuid/v4';
+import uuid from 'uuid/v4';
 import { IFileSystem, IPlatformService } from '../../../platform/common/platform/types';
 import { initialize, waitForCondition } from '../../common';
 import { VSCodeNotebook } from '../../../platform/common/application/notebook';

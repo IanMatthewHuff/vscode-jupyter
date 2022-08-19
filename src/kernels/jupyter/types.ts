@@ -1,6 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use strict';
 import type * as nbformat from '@jupyterlab/nbformat';
 import type { Session, ContentsManager } from '@jupyterlab/services';
@@ -22,9 +24,12 @@ import {
     IKernelSocket,
     KernelActionSource,
     LiveRemoteKernelConnectionMetadata,
-    IKernelConnectionSession
+    IKernelConnectionSession,
+    INotebookProviderConnection,
+    RemoteKernelConnectionMetadata
 } from '../types';
 import { ClassType } from '../../platform/ioc/types';
+import { IContributedKernelFinder } from '../internalTypes';
 
 export type JupyterServerInfo = {
     base_url: string;
@@ -330,4 +335,12 @@ export const IServerConnectionType = Symbol('IServerConnectionType');
 export interface IServerConnectionType {
     isLocalLaunch: boolean;
     onDidChange: Event<void>;
+}
+
+export interface IRemoteKernelFinder extends IContributedKernelFinder {
+    listKernelsFromConnection(
+        resource: Resource,
+        connInfo: INotebookProviderConnection | undefined,
+        cancelToken?: CancellationToken
+    ): Promise<RemoteKernelConnectionMetadata[]>;
 }

@@ -1,21 +1,22 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 
 import { assert, use } from 'chai';
 
 import { KernelMessage } from '@jupyterlab/services';
-import * as uuid from 'uuid/v4';
+import uuid from 'uuid/v4';
 import { createDeferred } from '../../platform/common/utils/async';
 import { createEventHandler, PYTHON_PATH, sleep, waitForCondition } from '../common.node';
 import { requestExecute } from './raw-kernel/rawKernelTestHelpers';
 
 // Chai as promised is not part of this file
-import * as chaiAsPromised from 'chai-as-promised';
+import chaiAsPromised from 'chai-as-promised';
 import { traceInfo } from '../../platform/logging';
 import { IS_REMOTE_NATIVE_TEST } from '../constants.node';
 import { initialize } from '../initialize.node';
-import { PortAttributesProviders } from '../../kernels/port/portAttributeProvider.node';
+import { PortAttributesProviders } from '../../kernels/raw/port/portAttributeProvider.node';
 import { IDisposable } from '../../platform/common/types';
 import { disposeAllDisposables } from '../../platform/common/helpers';
 import { CancellationTokenSource, PortAutoForwardAction } from 'vscode';

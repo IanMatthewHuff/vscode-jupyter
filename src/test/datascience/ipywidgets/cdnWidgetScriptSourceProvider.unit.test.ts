@@ -1,9 +1,10 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 import { assert } from 'chai';
 import * as fs from 'fs-extra';
 import { sha256 } from 'hash.js';
-import * as nock from 'nock';
+import nock from 'nock';
 import * as path from '../../../platform/vscode-path/path';
 import { Readable } from 'stream';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';

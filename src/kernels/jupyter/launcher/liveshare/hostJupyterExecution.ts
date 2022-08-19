@@ -1,9 +1,10 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 import '../../../../platform/common/extensions';
 
-import * as uuid from 'uuid/v4';
+import uuid from 'uuid/v4';
 import { CancellationToken } from 'vscode';
 
 import { JupyterExecutionBase } from '../jupyterExecution';

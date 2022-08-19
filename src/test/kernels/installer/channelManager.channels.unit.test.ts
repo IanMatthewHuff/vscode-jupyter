@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import * as assert from 'assert';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import assert from 'assert';
 import { Container } from 'inversify';
 import * as TypeMoq from 'typemoq';
 import { IApplicationShell } from '../../../platform/common/application/types';

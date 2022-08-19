@@ -1,6 +1,9 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { Resource } from '../../platform/common/types';
 import { Telemetry } from '../../platform/common/constants';
-import { setSharedProperty, sendTelemetryEvent, waitBeforeSending, IEventNamePropertyMapping } from '../../telemetry';
+import { sendTelemetryEvent, waitBeforeSending, IEventNamePropertyMapping } from '../../telemetry';
 import { getContextualPropsForTelemetry } from '../../platform/telemetry/telemetry';
 import { clearInterruptCounter, trackKernelResourceInformation } from './helper';
 import { StopWatch } from '../../platform/common/utils/stopWatch';
@@ -32,10 +35,6 @@ export function sendKernelTelemetryEvent<P extends IEventNamePropertyMapping, E 
     properties?: P[E] & { waitBeforeSending?: Promise<void> },
     ex?: Error
 ) {
-    if (eventName === Telemetry.ExecuteCell) {
-        setSharedProperty('userExecutedCell', 'true');
-    }
-
     const props = getContextualPropsForTelemetry(resource);
     Object.assign(props, properties || {});
     sendTelemetryEvent(
@@ -69,9 +68,6 @@ export function sendKernelTelemetryWhenDone<P extends IEventNamePropertyMapping,
     handleError: boolean,
     properties?: P[E] & { [waitBeforeSending]?: Promise<void> }
 ) {
-    if (eventName === Telemetry.ExecuteCell) {
-        setSharedProperty('userExecutedCell', 'true');
-    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const props: any = properties || {};
     const stopWatch = new StopWatch();

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 import { NotebookCellOutput, NotebookCellOutputItem, Uri, WorkspaceFolder } from 'vscode';
@@ -665,9 +665,7 @@ export function createOutputWithErrorMessageForDisplay(errorMessage: string) {
     // Ensure all lines are colored red as errors (except for lines containing hyperlinks).
     const stack = errorMessage
         .splitLines({ removeEmptyEntries: false, trim: false })
-        .map((line) => {
-            return line.includes('<a href') ? line : `\u001b[1;31m${line}`;
-        })
+        .map((line) => `\u001b[1;31m${line}`)
         .join('\n');
     return new NotebookCellOutput([
         NotebookCellOutputItem.error({

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -11,7 +10,7 @@ import { captureScreenShot, IExtensionTestApi } from './common.node';
 
 import * as ts from 'typescript';
 import * as fs from 'fs-extra';
-import * as glob from 'glob';
+import glob from 'glob';
 import * as path from '../platform/vscode-path/path';
 
 import { initialize } from './initialize.node';

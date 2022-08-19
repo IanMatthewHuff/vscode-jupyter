@@ -1,10 +1,10 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 import { IExtensionSingleActivationService, IExtensionSyncActivationService } from '../../platform/activation/types';
 import { IServiceManager } from '../../platform/ioc/types';
 import { DataScienceErrorHandlerNode } from '../errors/kernelErrorHandler.node';
 import { IDataScienceErrorHandler } from '../errors/types';
-import { IRemoteKernelFinder } from '../raw/types';
 import { INotebookProvider } from '../types';
 import { JupyterCommandLineSelectorCommand } from './commands/commandLineSelector';
 import { CommandRegistry } from './commands/commandRegistry';
@@ -37,7 +37,7 @@ import { NotebookServerProvider } from './launcher/notebookServerProvider';
 import { NotebookStarter } from './launcher/notebookStarter.node';
 import { JupyterServerUriStorage } from './launcher/serverUriStorage';
 import { LiveRemoteKernelConnectionUsageTracker } from './liveRemoteKernelConnectionTracker';
-import { RemoteKernelFinder } from './remoteKernelFinder';
+import { RemoteKernelFinder } from './finder/remoteKernelFinder';
 import { JupyterServerSelector } from './serverSelector';
 import { BackingFileCreator } from './session/backingFileCreator.node';
 import { JupyterRequestCreator } from './session/jupyterRequestCreator.node';
@@ -70,7 +70,10 @@ export function registerTypes(serviceManager: IServiceManager, _isDevMode: boole
     serviceManager.add<IJupyterCommandFactory>(IJupyterCommandFactory, JupyterCommandFactory);
     serviceManager.add<INotebookServerFactory>(INotebookServerFactory, HostJupyterServerFactory);
     serviceManager.addSingleton<IJupyterNotebookProvider>(IJupyterNotebookProvider, JupyterNotebookProvider);
-    serviceManager.addSingleton<IRemoteKernelFinder>(IRemoteKernelFinder, RemoteKernelFinder);
+    serviceManager.addSingleton<IExtensionSingleActivationService>(
+        IExtensionSingleActivationService,
+        RemoteKernelFinder
+    );
     serviceManager.addSingleton<IExtensionSingleActivationService>(
         IExtensionSingleActivationService,
         CellOutputMimeTypeTracker

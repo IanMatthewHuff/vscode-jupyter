@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 import * as vscode from 'vscode';
 import { IExtensionSyncActivationService } from '../platform/activation/types';
@@ -13,15 +14,18 @@ import { IRawNotebookSupportedService } from './raw/types';
 import { KernelCrashMonitor } from './kernelCrashMonitor';
 import { registerTypes as registerJupyterTypes } from './jupyter/serviceRegistry.web';
 import { injectable } from 'inversify';
-import { IKernelFinder, IKernelProvider, IThirdPartyKernelProvider } from './types';
+import { IKernelFinder, IKernelProvider, IStartupCodeProvider, IThirdPartyKernelProvider } from './types';
 import { KernelProvider, ThirdPartyKernelProvider } from './kernelProvider.web';
-import { KernelFinder } from './kernelFinder.web';
+import { KernelFinder } from './kernelFinder';
 import { PreferredRemoteKernelIdProvider } from './jupyter/preferredRemoteKernelIdProvider';
 import { IJupyterVariables, IKernelVariableRequester } from './variables/types';
 import { KernelVariables } from './variables/kernelVariables';
 import { JupyterVariables } from './variables/jupyterVariables';
 import { PythonVariablesRequester } from './variables/pythonVariableRequester';
 import { CellOutputDisplayIdTracker } from './execution/cellDisplayIdTracker';
+import { KernelAutoReConnectFailedMonitor } from './kernelAutoReConnectFailedMonitor';
+import { KernelAutoReconnectMonitor } from './kernelAutoReConnectMonitor';
+import { DebugStartupCodeProvider } from './debuggerStartupCodeProvider';
 
 @injectable()
 class RawNotebookSupportedService implements IRawNotebookSupportedService {
@@ -59,6 +63,14 @@ export function registerTypes(serviceManager: IServiceManager, isDevMode: boolea
     serviceManager.addSingleton<IJupyterVariables>(IJupyterVariables, KernelVariables, Identifiers.KERNEL_VARIABLES);
 
     serviceManager.addSingleton<IExtensionSyncActivationService>(IExtensionSyncActivationService, KernelCrashMonitor);
+    serviceManager.addSingleton<IExtensionSyncActivationService>(
+        IExtensionSyncActivationService,
+        KernelAutoReConnectFailedMonitor
+    );
+    serviceManager.addSingleton<IExtensionSyncActivationService>(
+        IExtensionSyncActivationService,
+        KernelAutoReconnectMonitor
+    );
     serviceManager.addSingleton<IKernelProvider>(IKernelProvider, KernelProvider);
     serviceManager.addSingleton<IThirdPartyKernelProvider>(IThirdPartyKernelProvider, ThirdPartyKernelProvider);
     serviceManager.addSingleton<PreferredRemoteKernelIdProvider>(
@@ -71,4 +83,5 @@ export function registerTypes(serviceManager: IServiceManager, isDevMode: boolea
     registerJupyterTypes(serviceManager, isDevMode);
 
     serviceManager.addSingleton<CellOutputDisplayIdTracker>(CellOutputDisplayIdTracker, CellOutputDisplayIdTracker);
+    serviceManager.addSingleton<IStartupCodeProvider>(IStartupCodeProvider, DebugStartupCodeProvider);
 }

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -9,7 +9,7 @@ import { traceInfo } from '../../platform/logging';
 import { IS_NON_RAW_NATIVE_TEST } from '../constants.node';
 import { initialize } from '../initialize.node';
 import { closeNotebooksAndCleanUpAfterTests, startJupyterServer } from './notebook/helper.node';
-import * as getFreePort from 'get-port';
+import getFreePort from 'get-port';
 import { IPythonExecutionFactory } from '../../platform/common/process/types.node';
 import { IInterpreterService } from '../../platform/interpreter/contracts';
 import { PythonEnvironment } from '../../platform/pythonEnvironments/info';

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 import { assert } from 'chai';
 import * as sinon from 'sinon';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -12,11 +13,7 @@ import { HttpClient } from '../../../platform/common/net/httpClient';
 import { PersistentState, PersistentStateFactory } from '../../../platform/common/persistentState';
 import { FileSystem } from '../../../platform/common/platform/fileSystem.node';
 import { IConfigurationService, IExtensionContext, IJupyterSettings, ReadWrite } from '../../../platform/common/types';
-import {
-    IKernel,
-    LocalKernelSpecConnectionMetadata,
-    RemoteKernelSpecConnectionMetadata
-} from '../../../platform/../kernels/types';
+import { IKernel, LocalKernelSpecConnectionMetadata, RemoteKernelSpecConnectionMetadata } from '../../../kernels/types';
 import { IPyWidgetScriptSourceProvider } from '../../../notebooks/controllers/ipywidgets/scriptSourceProvider/ipyWidgetScriptSourceProvider';
 import { LocalWidgetScriptSourceProvider } from '../../../notebooks/controllers/ipywidgets/scriptSourceProvider/localWidgetScriptSourceProvider.node';
 import { RemoteWidgetScriptSourceProvider } from '../../../notebooks/controllers/ipywidgets/scriptSourceProvider/remoteWidgetScriptSourceProvider';

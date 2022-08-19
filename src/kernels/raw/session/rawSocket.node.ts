@@ -1,9 +1,10 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 import { IDisposable } from '@fluentui/react';
 import type { KernelMessage } from '@jupyterlab/services';
 import * as wireProtocol from '@nteract/messaging/lib/wire-protocol';
-import * as uuid from 'uuid/v4';
+import uuid from 'uuid/v4';
 import * as WebSocketWS from 'ws';
 import type { Dealer, Subscriber } from 'zeromq';
 import { traceError } from '../../../platform/logging';

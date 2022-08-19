@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -7,8 +7,8 @@ import { assert } from 'chai';
 import { anything, instance, mock, when, verify, capture } from 'ts-mockito';
 import { FileSystem } from '../../../../platform/common/platform/fileSystem.node';
 import { IFileSystemNode } from '../../../../platform/common/platform/types.node';
-import { KernelDependencyService } from '../../../../platform/../kernels/kernelDependencyService.node';
-import { IKernelDependencyService, LocalKernelConnectionMetadata } from '../../../../platform/../kernels/types';
+import { KernelDependencyService } from '../../../../kernels/kernelDependencyService.node';
+import { IKernelDependencyService, LocalKernelConnectionMetadata } from '../../../../kernels/types';
 import { EnvironmentType } from '../../../../platform/pythonEnvironments/info';
 import { EXTENSION_ROOT_DIR } from '../../../../platform/constants.node';
 import * as path from '../../../../platform/vscode-path/path';

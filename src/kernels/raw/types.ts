@@ -1,12 +1,13 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 
 import { CancellationToken, Event } from 'vscode';
 import { IAsyncDisposable, IDisplayOptions, IDisposable, Resource } from '../../platform/common/types';
+import { IContributedKernelFinder } from '../internalTypes';
 import {
     IKernelConnectionSession,
-    INotebookProviderConnection,
     KernelConnectionMetadata,
     LocalKernelConnectionMetadata,
     LocalKernelSpecConnectionMetadata,
@@ -37,7 +38,7 @@ export interface IKernelConnection {
     kernel_name?: string;
 }
 
-export interface IKernelProcess extends IDisposable {
+export interface IKernelProcess extends IAsyncDisposable {
     readonly connection: Readonly<IKernelConnection>;
     readonly kernelConnectionMetadata: Readonly<LocalKernelSpecConnectionMetadata | PythonKernelConnectionMetadata>;
     /**
@@ -56,22 +57,13 @@ export interface IKernelProcess extends IDisposable {
     interrupt(): Promise<void>;
 }
 
-export const ILocalKernelFinder = Symbol('ILocalKernelFinder');
-export interface ILocalKernelFinder {
+export interface ILocalKernelFinder extends IContributedKernelFinder {
     /**
      * Finds all kernel specs including Python.
      */
     listKernels(resource: Resource, cancelToken?: CancellationToken): Promise<LocalKernelConnectionMetadata[]>;
 }
 
-export const IRemoteKernelFinder = Symbol('IRemoteKernelFinder');
-export interface IRemoteKernelFinder {
-    listKernels(
-        resource: Resource,
-        connInfo: INotebookProviderConnection | undefined,
-        cancelToken?: CancellationToken
-    ): Promise<KernelConnectionMetadata[]>;
-}
 /**
  * The daemon responsible for the Python Kernel.
  */

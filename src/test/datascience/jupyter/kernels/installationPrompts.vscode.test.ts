@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 import { assert } from 'chai';
@@ -9,7 +9,7 @@ import * as sinon from 'sinon';
 import { commands, Memento, workspace, window, Uri, NotebookCell, NotebookDocument, NotebookCellKind } from 'vscode';
 import { IPythonApiProvider } from '../../../../platform/api/types';
 import { ICommandManager, IVSCodeNotebook } from '../../../../platform/common/application/types';
-import { Kernel } from '../../../../platform/../kernels/kernel';
+import { Kernel } from '../../../../kernels/kernel';
 import { getDisplayPath } from '../../../../platform/common/platform/fs-paths';
 import {
     GLOBAL_MEMENTO,

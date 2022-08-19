@@ -1,9 +1,9 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
 
-import * as fastDeepEqual from 'fast-deep-equal';
+import fastDeepEqual from 'fast-deep-equal';
 import type * as nbformat from '@jupyterlab/nbformat';
 import * as KernelMessage from '@jupyterlab/services/lib/kernel/messages';
 import {

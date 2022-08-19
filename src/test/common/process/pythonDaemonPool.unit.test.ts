@@ -1,11 +1,11 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
 
 import * as fakeTimers from '@sinonjs/fake-timers';
 import { expect, use } from 'chai';
-import * as chaiPromised from 'chai-as-promised';
+import chaiPromised from 'chai-as-promised';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { Observable } from 'rxjs/Observable';

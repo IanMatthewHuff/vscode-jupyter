@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 
 import * as fsextra from 'fs-extra';
@@ -8,7 +9,7 @@ import * as os from 'os';
 import * as path from '../../../platform/vscode-path/path';
 import * as portfinder from 'portfinder';
 import { promisify } from 'util';
-import * as uuid from 'uuid/v4';
+import uuid from 'uuid/v4';
 import { CancellationError, CancellationToken, window } from 'vscode';
 import { IPythonExtensionChecker } from '../../../platform/api/types';
 import { Cancellation, createPromiseFromCancellation } from '../../../platform/common/cancellation';
@@ -20,7 +21,7 @@ import { IProcessServiceFactory, IPythonExecutionFactory } from '../../../platfo
 import { IDisposableRegistry, IConfigurationService, Resource } from '../../../platform/common/types';
 import { swallowExceptions } from '../../../platform/common/utils/decorators';
 import { DataScience } from '../../../platform/common/utils/localize';
-import { sendTelemetryEvent, Telemetry } from '../../../telemetry';
+import { Telemetry } from '../../../telemetry';
 import {
     isLocalConnection,
     LocalKernelSpecConnectionMetadata,
@@ -33,7 +34,9 @@ import { JupyterPaths } from '../finder/jupyterPaths.node';
 import { isTestExecution } from '../../../platform/common/constants';
 import { getDisplayPathFromLocalFile } from '../../../platform/common/platform/fs-paths.node';
 import { noop } from '../../../platform/common/utils/misc';
-import { sendKernelTelemetryWhenDone } from '../../telemetry/sendKernelTelemetryEvent';
+import { sendKernelTelemetryEvent, sendKernelTelemetryWhenDone } from '../../telemetry/sendKernelTelemetryEvent';
+import { PythonKernelInterruptDaemon } from '../finder/pythonKernelInterruptDaemon.node';
+import { IPlatformService } from '../../../platform/common/platform/types';
 
 const PortFormatString = `kernelLauncherPortStart_{0}.tmp`;
 // Launches and returns a kernel process given a resource or python interpreter.
@@ -57,7 +60,9 @@ export class KernelLauncher implements IKernelLauncher {
         @inject(IDisposableRegistry) private readonly disposables: IDisposableRegistry,
         @inject(IPythonExecutionFactory) private readonly pythonExecFactory: IPythonExecutionFactory,
         @inject(IConfigurationService) private readonly configService: IConfigurationService,
-        @inject(JupyterPaths) private readonly jupyterPaths: JupyterPaths
+        @inject(JupyterPaths) private readonly jupyterPaths: JupyterPaths,
+        @inject(PythonKernelInterruptDaemon) private readonly pythonKernelInterruptDaemon: PythonKernelInterruptDaemon,
+        @inject(IPlatformService) private readonly platformService: IPlatformService
     ) {}
 
     public static async cleanupStartPort() {
@@ -209,7 +214,9 @@ export class KernelLauncher implements IKernelLauncher {
             this.pythonExecFactory,
             outputChannel,
             jupyterSettings,
-            this.jupyterPaths
+            this.jupyterPaths,
+            this.pythonKernelInterruptDaemon,
+            this.platformService
         );
 
         try {
@@ -218,14 +225,14 @@ export class KernelLauncher implements IKernelLauncher {
                 createPromiseFromCancellation({ token: cancelToken, cancelAction: 'reject' })
             ]);
         } catch (ex) {
-            kernelProcess.dispose();
+            await kernelProcess.dispose();
             Cancellation.throwIfCanceled(cancelToken);
             throw ex;
         }
 
         const disposable = kernelProcess.exited(
             ({ exitCode, reason }) => {
-                sendTelemetryEvent(Telemetry.RawKernelSessionKernelProcessExited, undefined, {
+                sendKernelTelemetryEvent(resource, Telemetry.RawKernelSessionKernelProcessExited, undefined, {
                     exitCode,
                     exitReason: getTelemetrySafeErrorMessageFromPythonTraceback(reason)
                 });

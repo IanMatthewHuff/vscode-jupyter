@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -30,7 +30,7 @@ import {
     IDisplayOptions,
     IExtensionContext
 } from '../platform/common/types';
-import { Deferred, sleep } from '../platform/common/utils/async';
+import { sleep } from '../platform/common/utils/async';
 import { DataScience } from '../platform/common/utils/localize';
 import { noop } from '../platform/common/utils/misc';
 import { StopWatch } from '../platform/common/utils/stopWatch';
@@ -41,7 +41,7 @@ import {
     initializeInteractiveOrNotebookTelemetryBasedOnUserAction,
     trackKernelResourceInformation
 } from './telemetry/helper';
-import { sendTelemetryEvent, Telemetry } from '../telemetry';
+import { Telemetry } from '../telemetry';
 import { executeSilently, getDisplayNameOrNameOfKernelConnection, isPythonKernelConnection } from './helpers';
 import {
     IKernel,
@@ -131,12 +131,10 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
     private _jupyterSessionPromise?: Promise<IKernelConnectionSession>;
     private readonly hookedSessionForEvents = new WeakSet<IKernelConnectionSession>();
     private eventHooks: ((ev: 'willInterrupt' | 'willRestart') => Promise<void>)[] = [];
-    private restarting?: Deferred<void>;
     private startCancellation = new CancellationTokenSource();
     private startupUI = new DisplayOptions(true);
     protected kernelExecution: TKernelExecution;
     private disposingPromise?: Promise<void>;
-
     constructor(
         public readonly uri: Uri,
         public readonly resourceUri: Resource,
@@ -155,6 +153,18 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
         this.disposables.push(this._onStarted);
         this.disposables.push(this._onDisposed);
         this.disposables.push({ dispose: () => this._kernelSocket.unsubscribe() });
+        trackKernelResourceInformation(this.resourceUri, {
+            kernelConnection: this.kernelConnectionMetadata,
+            actionSource: this.creator,
+            disableUI: this.startupUI.disableUI
+        });
+        this.startupUI.onDidChangeDisableUI(() => {
+            if (!this.startupUI.disableUI) {
+                trackKernelResourceInformation(this.resourceUri, {
+                    disableUI: false
+                });
+            }
+        }, this.disposables);
     }
 
     public addEventHook(hook: (event: 'willRestart' | 'willInterrupt') => Promise<void>): void {
@@ -171,10 +181,6 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
     public async interrupt(): Promise<void> {
         await Promise.all(this.eventHooks.map((h) => h('willInterrupt')));
         trackKernelResourceInformation(this.resourceUri, { interruptKernel: true });
-        if (this.restarting) {
-            traceInfo(`Interrupt requested & currently restarting ${getDisplayPath(this.resourceUri || this.uri)}`);
-            await this.restarting.promise;
-        }
         traceInfo(`Interrupt requested ${getDisplayPath(this.resourceUri || this.uri)}`);
         this.startCancellation.cancel();
         const interruptResultPromise = this.kernelExecution.interrupt(this._jupyterSessionPromise);
@@ -205,7 +211,6 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
         this._ignoreJupyterSessionDisposedErrors = true;
         this.startCancellation.cancel();
         const disposeImpl = async () => {
-            this.restarting = undefined;
             const promises: Promise<void>[] = [];
             promises.push(this.kernelExecution.cancel());
             this._session = this._session
@@ -232,9 +237,6 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
         await this.disposingPromise;
     }
     public async restart(): Promise<void> {
-        if (this.restarting) {
-            return this.restarting.promise;
-        }
         await Promise.all(this.eventHooks.map((h) => h('willRestart')));
         traceInfo(`Restart requested ${this.uri}`);
         this.startCancellation.cancel();
@@ -261,7 +263,6 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
             const session = this._session;
             this._session = undefined;
             this._jupyterSessionPromise = undefined;
-            this.restarting = undefined;
             // If we get a kernel promise failure, then restarting timed out. Just shutdown and restart the entire server.
             // Note, this code might not be necessary, as such an error is thrown only when interrupting a kernel times out.
             sendKernelTelemetryEvent(this.resourceUri, Telemetry.NotebookRestart, stopWatch.elapsedTime, undefined, ex);
@@ -311,28 +312,40 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
                 this.disposables
             );
         }
-        if (this.restarting) {
-            await this.restarting.promise;
-        }
         if (!this._jupyterSessionPromise) {
             // Don't create a new one unnecessarily.
             if (this.startCancellation.token.isCancellationRequested) {
                 this.startCancellation = new CancellationTokenSource();
             }
-            this._jupyterSessionPromise = this.createJupyterSession(new StopWatch()).catch((ex) => {
-                traceInfoIfCI(
-                    `Failed to create Jupyter Session in Kernel.startNotebook for ${getDisplayPath(this.uri)}`
-                );
-                // If we fail also clear the promise.
-                this.startCancellation.cancel();
-                this._jupyterSessionPromise = undefined;
-                throw ex;
+            const stopWatch = new StopWatch();
+            trackKernelResourceInformation(this.resourceUri, {
+                kernelConnection: this.kernelConnectionMetadata,
+                actionSource: this.creator
             });
+
+            this._jupyterSessionPromise = this.createJupyterSession()
+                .then((session) => {
+                    sendKernelTelemetryEvent(
+                        this.resourceUri,
+                        Telemetry.PerceivedJupyterStartupNotebook,
+                        stopWatch.elapsedTime
+                    );
+                    return session;
+                })
+                .catch((ex) => {
+                    traceInfoIfCI(
+                        `Failed to create Jupyter Session in Kernel.startNotebook for ${getDisplayPath(this.uri)}`
+                    );
+                    // If we fail also clear the promise.
+                    this.startCancellation.cancel();
+                    this._jupyterSessionPromise = undefined;
+                    throw ex;
+                });
         }
         return this._jupyterSessionPromise;
     }
 
-    protected async createJupyterSession(stopWatch: StopWatch): Promise<IKernelConnectionSession> {
+    private async createJupyterSession(): Promise<IKernelConnectionSession> {
         let disposables: Disposable[] = [];
         try {
             // No need to block kernel startup on UI updates.
@@ -363,11 +376,7 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
             Cancellation.throwIfCanceled(this.startCancellation.token);
             await this.initializeAfterStart(session);
 
-            sendKernelTelemetryEvent(
-                this.resourceUri,
-                Telemetry.PerceivedJupyterStartupNotebook,
-                stopWatch.elapsedTime
-            );
+            this.sendKernelStartedTelemetry();
             this._session = session;
             this._onStarted.fire();
             return session;
@@ -397,6 +406,28 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
         } finally {
             disposeAllDisposables(disposables);
         }
+    }
+    private uiWasDisabledWhenKernelStartupTelemetryWasLastSent?: boolean;
+    protected sendKernelStartedTelemetry(): void {
+        if (
+            this.uiWasDisabledWhenKernelStartupTelemetryWasLastSent &&
+            this.uiWasDisabledWhenKernelStartupTelemetryWasLastSent === this.startupUI.disableUI
+        ) {
+            return;
+        } else {
+            // This means the UI is enabled, which happens when starting kernels or the like.
+            // i.e. we can display error messages and the like to the user now.
+            // Note: UI is disabled during auto start.
+            // Last time we sent kernel telemetry event, it was sent indicating the fact that the ui was disabled,
+            // Now we need to send the event `Telemetry.NotebookStart` again indicating the fact that the ui is enabled & that the kernel was started successfully based on a user action.
+        }
+
+        this.uiWasDisabledWhenKernelStartupTelemetryWasLastSent = this.startupUI.disableUI === true;
+        // The corresponding failure telemetry property for the `Telemetry.NotebookStart` event will be sent in the Error Handler,
+        // after we analyze the error.
+        sendKernelTelemetryEvent(this.resourceUri, Telemetry.NotebookStart, undefined, {
+            disableUI: this.startupUI.disableUI
+        });
     }
 
     protected createProgressIndicator(disposables: IDisposable[]) {
@@ -472,16 +503,14 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
         // Restart sessions and retries might make this hard to do correctly otherwise.
         session.registerCommTarget(Identifiers.DefaultCommTarget, noop);
 
-        // If this is a live kernel, we shouldn't be changing anything by running startup code.
+        // Gather all of the startup code at one time and execute as one cell
+        const startupCode = await this.gatherInternalStartupCode();
+        await this.executeSilently(session, startupCode, {
+            traceErrors: true,
+            traceErrorsMessage: 'Error executing jupyter extension internal startup code',
+            telemetryName: Telemetry.KernelStartupCodeFailure
+        });
         if (this.kernelConnectionMetadata.kind !== 'connectToLiveRemoteKernel') {
-            // Gather all of the startup code at one time and execute as one cell
-            const startupCode = await this.gatherInternalStartupCode();
-            await this.executeSilently(session, startupCode, {
-                traceErrors: true,
-                traceErrorsMessage: 'Error executing jupyter extension internal startup code',
-                telemetryName: Telemetry.KernelStartupCodeFailure
-            });
-
             // Run user specified startup commands
             await this.executeSilently(session, this.getUserStartupCommands(), {
                 traceErrors: true,
@@ -536,16 +565,18 @@ abstract class BaseKernel<TKernelExecution extends BaseKernelExecution> implemen
         // Gather all of the startup code into a giant string array so we
         // can execute it all at once.
         const result: string[] = [];
-        if (isPythonKernelConnection(this.kernelConnectionMetadata)) {
-            const dirs = await Promise.all(
-                this.startupCodeProviders
-                    .sort((a, b) => b.priority - a.priority)
-                    .map((provider) => provider.getCode(this))
-            );
-            for (let dir of dirs) {
-                result.push(...dir);
-            }
+        const startupCode = await Promise.all(
+            this.startupCodeProviders.sort((a, b) => b.priority - a.priority).map((provider) => provider.getCode(this))
+        );
+        for (let code of startupCode) {
+            result.push(...code);
+        }
 
+        // If this is a live kernel, we shouldn't be changing anything by running startup code.
+        if (
+            isPythonKernelConnection(this.kernelConnectionMetadata) &&
+            this.kernelConnectionMetadata.kind !== 'connectToLiveRemoteKernel'
+        ) {
             // Set the ipynb file
             const file = getFilePath(this.resourceUri);
             if (file) {
@@ -736,7 +767,9 @@ export class Kernel extends BaseKernel<KernelExecution> implements IKernel {
     }
     public async executeCell(cell: NotebookCell, codeOverride?: string): Promise<NotebookCellRunState> {
         traceCellMessage(cell, `kernel.executeCell, ${getDisplayPath(cell.notebook.uri)}`);
+        initializeInteractiveOrNotebookTelemetryBasedOnUserAction(this.resourceUri, this.kernelConnectionMetadata);
         sendKernelTelemetryEvent(this.resourceUri, Telemetry.ExecuteCell);
+        this.sendKernelStartedTelemetry();
         const stopWatch = new StopWatch();
         const sessionPromise = this.startJupyterSession();
         const promise = this.kernelExecution.executeCell(sessionPromise, cell, codeOverride);
@@ -767,10 +800,18 @@ export class Kernel extends BaseKernel<KernelExecution> implements IKernel {
         // Setup telemetry
         if (!this.perceivedJupyterStartupTelemetryCaptured) {
             this.perceivedJupyterStartupTelemetryCaptured = true;
-            sendTelemetryEvent(Telemetry.PerceivedJupyterStartupNotebook, stopWatch.elapsedTime);
+            sendKernelTelemetryEvent(
+                this.resourceUri,
+                Telemetry.PerceivedJupyterStartupNotebook,
+                stopWatch.elapsedTime
+            );
             executionPromise
                 .finally(() =>
-                    sendTelemetryEvent(Telemetry.StartExecuteNotebookCellPerceivedCold, stopWatch.elapsedTime)
+                    sendKernelTelemetryEvent(
+                        this.resourceUri,
+                        Telemetry.StartExecuteNotebookCellPerceivedCold,
+                        stopWatch.elapsedTime
+                    )
                 )
                 .catch(noop);
         }

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 import { NotebookCell, NotebookEditor, NotebookRendererMessaging, notebooks } from 'vscode';
@@ -7,7 +7,7 @@ import { traceInfo, traceInfoIfCI } from '../../../platform/logging';
 import { IDisposable } from '../../../platform/common/types';
 import { createDeferred } from '../../../platform/common/utils/async';
 import { noop } from '../../core';
-import * as colors from 'colors';
+import colors from 'colors';
 
 export function initializeWidgetComms(disposables: IDisposable[]): Utils {
     const messageChannel = notebooks.createRendererMessaging('jupyter-ipywidget-renderer');

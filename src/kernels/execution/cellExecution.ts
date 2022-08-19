@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -21,10 +21,10 @@ import { analyzeKernelErrors, createOutputWithErrorMessageForDisplay } from '../
 import { BaseError } from '../../platform/errors/types';
 import { disposeAllDisposables } from '../../platform/common/helpers';
 import { traceError, traceInfoIfCI, traceWarning } from '../../platform/logging';
-import { IDisposable } from '../../platform/common/types';
+import { IDisposable, Resource } from '../../platform/common/types';
 import { createDeferred } from '../../platform/common/utils/async';
 import { StopWatch } from '../../platform/common/utils/stopWatch';
-import { sendTelemetryEvent, Telemetry } from '../../telemetry';
+import { Telemetry } from '../../telemetry';
 import { noop } from '../../platform/common/utils/misc';
 import { getDisplayNameOrNameOfKernelConnection, isPythonKernelConnection } from '../../kernels/helpers';
 import { isCancellationError } from '../../platform/common/cancellation';
@@ -32,6 +32,8 @@ import { activeNotebookCellExecution, CellExecutionMessageHandler } from './cell
 import { CellExecutionMessageHandlerService } from './cellExecutionMessageHandlerService';
 import { IKernelConnectionSession, KernelConnectionMetadata, NotebookCellRunState } from '../../kernels/types';
 import { NotebookCellStateTracker, traceCellMessage } from './helpers';
+import { JupyterNotebookView } from '../../platform/common/constants';
+import { sendKernelTelemetryEvent } from '../telemetry/sendKernelTelemetryEvent';
 
 /**
  * Factory for CellExecution objects.
@@ -42,9 +44,14 @@ export class CellExecutionFactory {
         private readonly requestListener: CellExecutionMessageHandlerService
     ) {}
 
-    public create(cell: NotebookCell, code: string | undefined, metadata: Readonly<KernelConnectionMetadata>) {
+    public create(
+        cell: NotebookCell,
+        code: string | undefined,
+        metadata: Readonly<KernelConnectionMetadata>,
+        resourceUri: Resource
+    ) {
         // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        return CellExecution.fromCell(cell, code, metadata, this.controller, this.requestListener);
+        return CellExecution.fromCell(cell, code, metadata, this.controller, this.requestListener, resourceUri);
     }
 }
 
@@ -87,6 +94,7 @@ export class CellExecution implements IDisposable {
         private readonly codeOverride: string | undefined,
         private readonly kernelConnection: Readonly<KernelConnectionMetadata>,
         private readonly controller: NotebookController,
+        private readonly resourceUri: Resource,
         private readonly requestListener: CellExecutionMessageHandlerService
     ) {
         workspace.onDidCloseTextDocument(
@@ -132,9 +140,10 @@ export class CellExecution implements IDisposable {
         code: string | undefined,
         metadata: Readonly<KernelConnectionMetadata>,
         controller: NotebookController,
-        requestListener: CellExecutionMessageHandlerService
+        requestListener: CellExecutionMessageHandlerService,
+        resourceUri: Resource
     ) {
-        return new CellExecution(cell, code, metadata, controller, requestListener);
+        return new CellExecution(cell, code, metadata, controller, resourceUri, requestListener);
     }
     public async start(session: IKernelConnectionSession) {
         if (this.cancelHandled) {
@@ -297,12 +306,22 @@ export class CellExecution implements IDisposable {
     }
 
     private sendPerceivedCellExecute() {
-        const props = { notebook: true };
+        const props = { notebook: this.controller.notebookType === JupyterNotebookView };
         if (!CellExecution.sentExecuteCellTelemetry) {
             CellExecution.sentExecuteCellTelemetry = true;
-            sendTelemetryEvent(Telemetry.ExecuteCellPerceivedCold, this.stopWatchForTelemetry.elapsedTime, props);
+            sendKernelTelemetryEvent(
+                this.resourceUri,
+                Telemetry.ExecuteCellPerceivedCold,
+                this.stopWatchForTelemetry.elapsedTime,
+                props
+            );
         } else {
-            sendTelemetryEvent(Telemetry.ExecuteCellPerceivedWarm, this.stopWatchForTelemetry.elapsedTime, props);
+            sendKernelTelemetryEvent(
+                this.resourceUri,
+                Telemetry.ExecuteCellPerceivedWarm,
+                this.stopWatchForTelemetry.elapsedTime,
+                props
+            );
         }
     }
     private canExecuteCell() {

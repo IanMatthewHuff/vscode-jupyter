@@ -1,4 +1,7 @@
-import * as assert from 'assert';
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import assert from 'assert';
 import * as path from '../../../platform/vscode-path/path';
 import * as sinon from 'sinon';
 import * as platformApis from '../../../platform/common/utils/platform.node';

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -7,7 +7,7 @@
 import { assert, expect } from 'chai';
 import * as fs from 'fs';
 import * as path from '../../../platform/vscode-path/path';
-import * as dedent from 'dedent';
+import dedent from 'dedent';
 import * as sinon from 'sinon';
 import {
     commands,

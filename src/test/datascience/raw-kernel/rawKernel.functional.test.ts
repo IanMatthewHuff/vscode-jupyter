@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -9,7 +9,7 @@ suite('Dummy13', () => {
 });
 // import { assert } from 'chai';
 // import * as portfinder from 'portfinder';
-// import * as uuid from 'uuid/v4';
+// import uuid from 'uuid/v4';
 // import { IPythonExtensionChecker } from '../../../platform/api/types';
 // import { IFileSystem } from '../../../platform/common/platform/types.node';
 // import { IProcessServiceFactory } from '../../../platform/common/process/types';

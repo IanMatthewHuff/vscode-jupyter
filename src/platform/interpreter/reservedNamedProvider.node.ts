@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 import { inject, injectable, named } from 'inversify';
@@ -9,7 +9,7 @@ import { IWorkspaceService } from '../../platform/common/application/types';
 import { IPlatformService } from '../../platform/common/platform/types';
 import { disposeAllDisposables } from '../../platform/common/helpers';
 import { IReservedPythonNamedProvider } from './types';
-import * as minimatch from 'minimatch';
+import minimatch from 'minimatch';
 import { IFileSystemNode } from '../common/platform/types.node';
 import * as path from '../../platform/vscode-path/resources';
 

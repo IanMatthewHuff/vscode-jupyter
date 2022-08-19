@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 
 import { ChildProcess } from 'child_process';
@@ -26,7 +27,6 @@ import {
     createPromiseFromCancellation,
     isCancellationError
 } from '../../../platform/common/cancellation';
-import { KernelInterruptDaemonModule } from '../../../platform/common/constants';
 import {
     getTelemetrySafeErrorMessageFromPythonTraceback,
     getErrorMessageFromPythonTraceback
@@ -49,16 +49,19 @@ import {
     IProcessService
 } from '../../../platform/common/process/types.node';
 import { Resource, IOutputChannel, IJupyterSettings } from '../../../platform/common/types';
-import { createDeferred } from '../../../platform/common/utils/async';
+import { createDeferred, sleep } from '../../../platform/common/utils/async';
 import { DataScience } from '../../../platform/common/utils/localize';
 import { noop, swallowExceptions } from '../../../platform/common/utils/misc';
 import { KernelDiedError } from '../../errors/kernelDiedError';
 import { KernelPortNotUsedTimeoutError } from '../../errors/kernelPortNotUsedTimeoutError';
 import { KernelProcessExitedError } from '../../errors/kernelProcessExitedError';
 import { captureTelemetry, Telemetry } from '../../../telemetry';
-import { PythonKernelInterruptDaemon } from '../finder/pythonKernelInterruptDaemon.node';
+import { Interrupter, PythonKernelInterruptDaemon } from '../finder/pythonKernelInterruptDaemon.node';
 import { TraceOptions } from '../../../platform/logging/types';
 import { JupyterPaths } from '../finder/jupyterPaths.node';
+import { ProcessService } from '../../../platform/common/process/proc.node';
+import { IPlatformService } from '../../../platform/common/platform/types';
+import pidtree from 'pidtree';
 
 // Launches and disposes a kernel process given a kernelspec and a resource or python interpreter.
 // Exposes connection information and the process itself.
@@ -84,13 +87,12 @@ export class KernelProcess implements IKernelProcess {
         return true;
     }
     private _process?: ChildProcess;
-    private _interruptDaemon?: PythonKernelInterruptDaemon;
     private exitEvent = new EventEmitter<{ exitCode?: number; reason?: string }>();
     private launchedOnce?: boolean;
     private disposed?: boolean;
     private connectionFile?: string;
     private _launchKernelSpec?: IJupyterKernelSpec;
-    private _interruptSignalHandle = 0;
+    private interrupter?: Interrupter;
     private readonly _kernelConnectionMetadata: Readonly<
         LocalKernelSpecConnectionMetadata | PythonKernelConnectionMetadata
     >;
@@ -105,7 +107,9 @@ export class KernelProcess implements IKernelProcess {
         private readonly pythonExecFactory: IPythonExecutionFactory,
         private readonly outputChannel: IOutputChannel | undefined,
         private readonly jupyterSettings: IJupyterSettings,
-        private readonly jupyterPaths: JupyterPaths
+        private readonly jupyterPaths: JupyterPaths,
+        private readonly pythonKernelInterruptDaemon: PythonKernelInterruptDaemon,
+        private readonly platform: IPlatformService
     ) {
         this._kernelConnectionMetadata = kernelConnectionMetadata;
     }
@@ -115,18 +119,18 @@ export class KernelProcess implements IKernelProcess {
         } else if (
             this._kernelConnectionMetadata.kernelSpec.interrupt_mode !== 'message' &&
             this._process &&
-            !this._interruptSignalHandle
+            !this.interrupter
         ) {
             traceInfo('Interrupting kernel via SIGINT');
             kill(this._process.pid, 'SIGINT');
         } else if (
             this._kernelConnectionMetadata.kernelSpec.interrupt_mode !== 'message' &&
             this._process &&
-            this._interruptSignalHandle &&
+            this.interrupter &&
             isPythonKernelConnection(this._kernelConnectionMetadata)
         ) {
             traceInfo('Interrupting kernel via custom event (Win32)');
-            return this.fireWin32InterruptEvent();
+            return this.interrupter.interrupt();
         } else {
             traceError('No process to interrupt in KernleProcess.ts');
         }
@@ -246,7 +250,7 @@ export class KernelProcess implements IKernelProcess {
                 traceError(stderrProc || stderr);
             }
             // Make sure to dispose if we never connect.
-            this.dispose();
+            await this.dispose();
 
             if (!cancelToken?.isCancellationRequested && e instanceof BaseError) {
                 throw e;
@@ -272,14 +276,18 @@ export class KernelProcess implements IKernelProcess {
         }
     }
 
-    public dispose(): void {
+    public async dispose(): Promise<void> {
         if (this.disposed) {
             return;
         }
         traceVerbose('Dispose Kernel process');
         this.disposed = true;
+        await Promise.race([
+            sleep(1_000), // Wait for a max of 1s, we don't want to delay killing the kernel process.
+            this.killChildProcesses(this._process?.pid).catch(noop)
+        ]);
         swallowExceptions(() => {
-            this._interruptDaemon?.kill().ignoreErrors();
+            this.interrupter?.dispose().ignoreErrors();
             this._process?.kill(); // NOSONAR
             this.exitEvent.fire({});
         });
@@ -290,6 +298,35 @@ export class KernelProcess implements IKernelProcess {
                     .catch((ex) => traceWarning(`Failed to delete connection file ${this.connectionFile}`, ex));
             }
         });
+    }
+
+    private async killChildProcesses(pid?: number) {
+        // Do not remove this code, in in unit tests we end up running this,
+        // then we run into the danger of kill all of the processes on the machine.
+        // because calling `pidtree` without a pid will return all pids and hence everything ends up getting killed.
+        if (!pid || !ProcessService.isAlive(pid)) {
+            return;
+        }
+        try {
+            if (this.platform.isWindows) {
+                const windir = process.env['WINDIR'] || 'C:\\Windows';
+                const TASK_KILL = path.join(windir, 'System32', 'taskkill.exe');
+                await new ProcessService().exec(TASK_KILL, ['/F', '/T', '/PID', pid.toString()]);
+            } else {
+                await new Promise<void>((resolve) => {
+                    pidtree(pid, (ex: unknown, pids: number[]) => {
+                        if (ex) {
+                            traceWarning(`Failed to kill children for ${pid}`, ex);
+                        } else {
+                            pids.forEach((procId) => ProcessService.kill(procId));
+                        }
+                        resolve();
+                    });
+                });
+            }
+        } catch (ex) {
+            traceWarning(`Failed to kill children for ${pid}`, ex);
+        }
     }
 
     private sendToOutput(data: string) {
@@ -504,27 +541,12 @@ export class KernelProcess implements IKernelProcess {
     }
 
     private async getWin32InterruptHandle(): Promise<number> {
-        if (!this._interruptSignalHandle) {
-            const interruptDaemon = await this.pythonExecFactory.createDaemon({
-                daemonModule: KernelInterruptDaemonModule,
-                resource: this.resource,
-                interpreter: this._kernelConnectionMetadata.interpreter!,
-                daemonClass: PythonKernelInterruptDaemon,
-                dedicated: true
-            });
-            if ('kill' in interruptDaemon) {
-                this._interruptDaemon = interruptDaemon;
-            }
-            if (this._interruptDaemon) {
-                this._interruptSignalHandle = await this._interruptDaemon.getInterruptHandle();
-            }
+        if (!this.interrupter) {
+            this.interrupter = await this.pythonKernelInterruptDaemon.createInterrupter(
+                this._kernelConnectionMetadata.interpreter!,
+                this.resource
+            );
         }
-        return this._interruptSignalHandle;
-    }
-
-    private async fireWin32InterruptEvent() {
-        if (this._interruptDaemon) {
-            return this._interruptDaemon.interrupt();
-        }
+        return this.interrupter?.handle;
     }
 }

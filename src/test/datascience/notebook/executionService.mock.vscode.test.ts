@@ -1,5 +1,5 @@
-// // Copyright (c) Microsoft Corporation. All rights reserved.
-// // Licensed under the MIT License.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 // 'use strict';
 
@@ -24,7 +24,7 @@
 // } from './helper';
 // import { ProductNames } from '../../../platform/common/installer/productNames';
 // import { INotebookControllerManager } from '../../../notebooks/types';
-// import { IKernelProvider } from '../../../platform/../kernels/types';
+// import { IKernelProvider } from '../../../kernels/types';
 // import {
 //     IJupyterKernelConnectionSession,
 //     INotebook,

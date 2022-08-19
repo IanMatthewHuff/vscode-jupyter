@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 'use strict';
@@ -15,11 +15,14 @@ import {
     IControllerLoader,
     IControllerPreferredService,
     IControllerRegistration,
-    IControllerSelection
+    IControllerSelection,
+    IKernelRankingHelper
 } from './types';
 import { registerTypes as registerWidgetTypes } from './ipywidgets/serviceRegistry.web';
+import { KernelRankingHelper } from './kernelRanking/kernelRankingHelper';
 
 export function registerTypes(serviceManager: IServiceManager, isDevMode: boolean) {
+    serviceManager.addSingleton<IKernelRankingHelper>(IKernelRankingHelper, KernelRankingHelper);
     serviceManager.addSingleton<IControllerRegistration>(IControllerRegistration, ControllerRegistration);
     serviceManager.addSingleton<IControllerDefaultService>(IControllerDefaultService, ControllerDefaultService);
     serviceManager.addSingleton<IControllerLoader>(IControllerLoader, ControllerLoader);

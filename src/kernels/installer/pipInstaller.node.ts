@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 import { inject, injectable } from 'inversify';
@@ -78,6 +78,13 @@ export class PipInstaller extends ModuleInstaller {
         args.push(...['install', '-U']);
         if (flags & ModuleInstallFlags.reInstall) {
             args.push('--force-reinstall');
+        }
+        if (
+            interpreter.envType === EnvironmentType.Global ||
+            interpreter.envType === EnvironmentType.WindowsStore ||
+            interpreter.envType === EnvironmentType.System
+        ) {
+            args.push('--user');
         }
         return {
             args: ['-m', 'pip', ...args, moduleName]

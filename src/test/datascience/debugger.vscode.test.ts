@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
@@ -130,7 +131,7 @@ suite('VSCode Notebook - Run By Line', function () {
         }
     });
 
-    test('Stops at end of cell', async function () {
+    test.skip('Stops at end of cell', async function () {
         // Run by line seems to end up on the second line of the function, not the first
         const cell = await insertCodeCell('a=1\na', { index: 0 });
         const doc = vscodeNotebook.activeNotebookEditor?.notebook!;
@@ -192,7 +193,7 @@ suite('VSCode Notebook - Run By Line', function () {
         );
     });
 
-    test('Stops in same-cell function called from last line', async function () {
+    test.skip('Stops in same-cell function called from last line', async function () {
         const cell = await insertCodeCell('def foo():\n    print(1)\n\nfoo()', { index: 0 });
         const doc = vscodeNotebook.activeNotebookEditor?.notebook!;
 

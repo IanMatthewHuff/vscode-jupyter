@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 /* eslint-disable , no-trailing-spaces, no-multi-str, , @typescript-eslint/no-unused-expressions */
 // Disable whitespace / multiline as we use that to pass in our fake file strings
@@ -37,7 +38,7 @@ import { MockJupyterSettings } from '../mockJupyterSettings';
 import { MockEditor } from '../mockTextEditor';
 import { createDocument } from './helpers';
 import { disposeAllDisposables } from '../../../platform/common/helpers';
-import { IKernel, IKernelProvider } from '../../../platform/../kernels/types';
+import { IKernel, IKernelProvider } from '../../../kernels/types';
 import { InteractiveCellResultError } from '../../../platform/errors/interactiveCellResultError';
 import { ICodeWatcher, IGeneratedCodeStorageFactory } from '../../../interactive-window/editor-integration/types';
 import { IInteractiveWindowProvider, IInteractiveWindow } from '../../../interactive-window/types';

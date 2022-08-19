@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 'use strict';
 import { assert } from 'chai';
 import { ConfigurationChangeEvent, EventEmitter, FileSystemWatcher, Uri, WorkspaceConfiguration } from 'vscode';
@@ -11,7 +11,7 @@ import { CustomEnvironmentVariablesProvider } from '../../../../../platform/comm
 import { IEnvironmentVariablesService } from '../../../../../platform/common/variables/types';
 import * as fs from 'fs-extra';
 import { EXTENSION_ROOT_DIR_FOR_TESTS } from '../../../../constants.node';
-import * as dedent from 'dedent';
+import dedent from 'dedent';
 import { IPythonExtensionChecker } from '../../../../../platform/api/types';
 import { captureScreenShot, createEventHandler } from '../../../../common';
 import { traceInfo } from '../../../../../platform/logging';

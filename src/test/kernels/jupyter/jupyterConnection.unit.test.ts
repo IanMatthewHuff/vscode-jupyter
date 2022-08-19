@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { assert, use } from 'chai';
 
@@ -16,7 +17,7 @@ import {
 } from '../../../kernels/jupyter/types';
 import { disposeAllDisposables } from '../../../platform/common/helpers';
 import { IDisposable } from '../../../platform/common/types';
-import * as chaiAsPromised from 'chai-as-promised';
+import chaiAsPromised from 'chai-as-promised';
 use(chaiAsPromised);
 suite('Jupyter Connection', async () => {
     let jupyterConnection: JupyterConnection;

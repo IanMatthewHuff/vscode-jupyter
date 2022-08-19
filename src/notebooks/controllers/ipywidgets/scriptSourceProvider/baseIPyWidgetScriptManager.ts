@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 import { Uri } from 'vscode';
@@ -10,7 +9,7 @@ import { traceError, traceInfoIfCI, traceWarning } from '../../../../platform/lo
 import { sendTelemetryEvent, Telemetry } from '../../../../telemetry';
 import { IKernel, isLocalConnection } from '../../../../kernels/types';
 import { getTelemetrySafeHashedString } from '../../../../platform/telemetry/helpers';
-import * as stripComments from 'strip-comments';
+import stripComments from 'strip-comments';
 import { IIPyWidgetScriptManager } from '../types';
 import { StopWatch } from '../../../../platform/common/utils/stopWatch';
 import { isCI } from '../../../../platform/common/constants';

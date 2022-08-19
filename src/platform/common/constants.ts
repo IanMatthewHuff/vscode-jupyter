@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 export const PYTHON_LANGUAGE = 'python';
 export const MARKDOWN_LANGUAGE = 'markdown';
 export const JUPYTER_LANGUAGE = 'jupyter';
@@ -119,7 +122,6 @@ export namespace CodeSnippets {
 
 // Identifier for the output panel that will display the output from the Jupyter Server.
 export const JUPYTER_OUTPUT_CHANNEL = 'JUPYTER_OUTPUT_CHANNEL';
-export const KernelInterruptDaemonModule = 'vscode_datascience_helpers.kernel_interrupt_daemon';
 export const JupyterDaemonModule = 'vscode_datascience_helpers.jupyter_daemon';
 
 export const DefaultTheme = 'Default Light+';
@@ -319,8 +321,9 @@ export namespace EditorContexts {
     export const CanInterruptNotebookKernel = 'jupyter.notebookeditor.canInterruptNotebookKernel';
     export const CanRestartInteractiveWindowKernel = 'jupyter.interactive.canRestartNotebookKernel';
     export const CanInterruptInteractiveWindowKernel = 'jupyter.interactive.canInterruptNotebookKernel';
-    export const DebuggingInProgress = 'jupyter.notebookeditor.debuggingInProgress';
-    export const RunByLineInProgress = 'jupyter.notebookeditor.runByLineInProgress';
+    export const RunByLineCells = 'jupyter.notebookeditor.runByLineCells';
+    export const RunByLineDocuments = 'jupyter.notebookeditor.runByLineDocuments';
+    export const DebugDocuments = 'jupyter.notebookeditor.debugDocuments';
     export const IsPythonNotebook = 'jupyter.ispythonnotebook';
     export const IsJupyterKernelSelected = 'jupyter.kernel.isjupyter';
     export const IsDataViewerActive = 'jupyter.dataViewerActive';
@@ -693,20 +696,6 @@ export enum NativeMouseCommandTelemetry {
     SelectServer = 'DATASCIENCE.NATIVE.MOUSE.SELECT_SERVER',
     Save = 'DATASCIENCE.NATIVE.MOUSE.SAVE',
     ToggleVariableExplorer = 'DATASCIENCE.NATIVE.MOUSE.TOGGLE_VARIABLE_EXPLORER'
-}
-
-/**
- * Notebook editing in VS Code Notebooks is handled by VSC.
- * There's no way for us to know whether user added a cell using keyboard or not.
- * Similarly a cell could have been added as part of an undo operation.
- * All we know is previously user had n # of cells and now they have m # of cells.
- */
-export enum VSCodeNativeTelemetry {
-    AddCell = 'DATASCIENCE.VSCODE_NATIVE.INSERT_CELL',
-    DeleteCell = 'DATASCIENCE.VSCODE_NATIVE.DELETE_CELL',
-    MoveCell = 'DATASCIENCE.VSCODE_NATIVE.MOVE_CELL',
-    ChangeToCode = 'DATASCIENCE.VSCODE_NATIVE.CHANGE_TO_CODE', // Not guaranteed to work see, https://github.com/microsoft/vscode/issues/100042
-    ChangeToMarkdown = 'DATASCIENCE.VSCODE_NATIVE.CHANGE_TO_MARKDOWN' // Not guaranteed to work see, https://github.com/microsoft/vscode/issues/100042
 }
 
 export enum JupyterCommands {

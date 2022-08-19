@@ -1,13 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable local-rules/node-imports */
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
+/* eslint-disable local-rules/node-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /** DO NOT USE VSCODE in this file. It's loaded outside of an extension */
 
-import * as getFreePort from 'get-port';
+import getFreePort from 'get-port';
 import * as tcpPortUsed from 'tcp-port-used';
-import * as uuid from 'uuid/v4';
+import uuid from 'uuid/v4';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import * as child_process from 'child_process';
