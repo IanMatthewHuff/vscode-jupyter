@@ -44,7 +44,9 @@ export enum ReportableAction {
     JupyterSessionWaitForIdleSession = 'JupyterSessionWaitForIdleSession',
     InstallingMissingDependencies = 'InstallingMissingDependencies',
     ExportNotebookToPython = 'ExportNotebookToPython',
-    PerformingExport = 'PerformingExport'
+    PerformingExport = 'PerformingExport',
+    CreatingVenvEnvironment = 'CreatingVenvEnvironment',
+    CreatingCondaEnvironment = 'CreatingCondaEnvironment'
 }
 
 export const IStatusProvider = Symbol('IStatusProvider');

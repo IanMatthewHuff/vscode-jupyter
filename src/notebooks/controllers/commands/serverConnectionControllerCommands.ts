@@ -94,20 +94,21 @@ export class ServerConnectionControllerCommands implements IExtensionSingleActiv
     }
 
     private async updateContextKeys() {
-        if (this.configurationService.getSettings().showOnlyOneTypeOfKernel) {
-            const isLocal = this.serverConnectionType.isLocalLaunch;
-            await (this.isWeb ? this.controllerLoader.loaded : Promise.resolve(true));
+        // IANHU: Just a hack to hide the "Connect to Server" command for Demo work
+        // if (this.configurationService.getSettings().showOnlyOneTypeOfKernel) {
+        // const isLocal = this.serverConnectionType.isLocalLaunch;
+        // await (this.isWeb ? this.controllerLoader.loaded : Promise.resolve(true));
 
-            this.showingLocalOrWebEmptyContext
-                .set(isLocal || (this.isWeb && this.controllerRegistration.registered.length === 0))
-                .ignoreErrors();
-            this.showingRemoteNotWebContext.set(!isLocal && !this.isWeb).ignoreErrors();
-            this.showingRemoteContext.set(!isLocal && this.controllerRegistration.registered.length > 0).ignoreErrors();
-        } else {
-            this.showingLocalOrWebEmptyContext.set(false).ignoreErrors();
-            this.showingRemoteNotWebContext.set(false).ignoreErrors();
-            this.showingRemoteContext.set(false).ignoreErrors();
-        }
+        // this.showingLocalOrWebEmptyContext
+        // .set(isLocal || (this.isWeb && this.controllerRegistration.registered.length === 0))
+        // .ignoreErrors();
+        // this.showingRemoteNotWebContext.set(!isLocal && !this.isWeb).ignoreErrors();
+        // this.showingRemoteContext.set(!isLocal && this.controllerRegistration.registered.length > 0).ignoreErrors();
+        // } else {
+        this.showingLocalOrWebEmptyContext.set(false).ignoreErrors();
+        this.showingRemoteNotWebContext.set(false).ignoreErrors();
+        this.showingRemoteContext.set(false).ignoreErrors();
+        // }
     }
 
     private onDidChangeConfiguration(e: ConfigurationChangeEvent) {

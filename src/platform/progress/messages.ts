@@ -15,7 +15,9 @@ const progressMessages = {
     [ReportableAction.NotebookStart]: DataScience.startingJupyterNotebook(),
     [ReportableAction.InstallingMissingDependencies]: DataScience.installingMissingDependencies(),
     [ReportableAction.ExportNotebookToPython]: DataScience.exportNotebookToPython(),
-    [ReportableAction.PerformingExport]: DataScience.performingExport()
+    [ReportableAction.PerformingExport]: DataScience.performingExport(),
+    [ReportableAction.CreatingVenvEnvironment]: 'Creating Venv Environment',
+    [ReportableAction.CreatingCondaEnvironment]: 'Creating Conda Environment'
 };
 
 /**

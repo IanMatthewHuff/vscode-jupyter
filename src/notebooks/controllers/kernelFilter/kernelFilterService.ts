@@ -11,6 +11,7 @@ import { KernelConnectionMetadata } from '../../../kernels/types';
 import { sendTelemetryEvent } from '../../../telemetry';
 import { Telemetry } from '../../../platform/common/constants';
 import { getDisplayPath } from '../../../platform/common/platform/fs-paths';
+//import { EnvironmentType } from '../../../platform/pythonEnvironments/info';
 
 /**
  * Keeps track of which kernels are filtered or not. Supports local and remote but not 'live' kernels.
@@ -33,6 +34,16 @@ export class KernelFilterService implements IDisposable {
         this._onDidChange.dispose();
         disposeAllDisposables(this.disposables);
     }
+    // public isKernelHidden(kernelConnection: KernelConnectionMetadata): boolean {
+    // if (
+    // kernelConnection.kind === 'startUsingPythonInterpreter' &&
+    // kernelConnection.interpreter.envType === EnvironmentType.Venv
+    // ) {
+    // return false;
+    // }
+    // return true;
+    // }
+    // IANHU: Just for testing
     public isKernelHidden(kernelConnection: KernelConnectionMetadata): boolean {
         const hiddenList = this.getFilters();
         if (kernelConnection.kind === 'connectToLiveRemoteKernel') {
@@ -96,6 +107,33 @@ export class KernelFilterService implements IDisposable {
         }
         this._onDidChange.fire();
     }
+
+    // IANHU: Just added for testing
+    public async removeConnectionFromFilter(connection: KernelConnectionMetadata) {
+        const hiddenList = this.getFilters();
+
+        const targetFilter = this.translateConnectionToFilter(connection);
+
+        if (targetFilter) {
+            const newList = hiddenList.filter((filter) => {
+                return !(filter.type === targetFilter.type && filter.path === targetFilter.path);
+            });
+
+            // Dupe from above
+            const folders = (this.workspace.workspaceFolders || []).map((item) => item.uri);
+            if (folders.length > 0) {
+                await Promise.all(
+                    folders.map((folder) =>
+                        this.config.updateSetting('kernels.filter', newList, folder, ConfigurationTarget.Workspace)
+                    )
+                );
+            } else {
+                await this.config.updateSetting('kernels.filter', newList, undefined, ConfigurationTarget.Global);
+            }
+            this._onDidChange.fire();
+        }
+    }
+
     private translateConnectionToFilter(connection: KernelConnectionMetadata): KernelFilter | undefined {
         if (connection.kind === 'connectToLiveRemoteKernel') {
             traceVerbose('Hiding default or live kernels via filter is not supported');
