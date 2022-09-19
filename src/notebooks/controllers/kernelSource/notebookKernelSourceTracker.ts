@@ -4,7 +4,7 @@
 'use strict';
 
 import { inject, injectable } from 'inversify';
-import { NotebookControllerAffinityExtended, NotebookDocument, workspace } from 'vscode';
+import { NotebookControllerAffinity2, NotebookDocument, workspace } from 'vscode';
 import { IContributedKernelFinderInfo } from '../../../kernels/internalTypes';
 import { IExtensionSyncActivationService } from '../../../platform/activation/types';
 import { IDisposableRegistry } from '../../../platform/common/types';
@@ -92,11 +92,11 @@ export class NotebookKernelSourceTracker implements INotebookKernelSourceTracker
     }
 
     private associateController(notebook: NotebookDocument, controller: IVSCodeNotebookController) {
-        controller.controller.updateNotebookAffinity(notebook, NotebookControllerAffinityExtended.Default);
+        controller.controller.updateNotebookAffinity(notebook, NotebookControllerAffinity2.Default);
     }
 
     private disassociateController(notebook: NotebookDocument, controller: IVSCodeNotebookController) {
-        controller.controller.updateNotebookAffinity(notebook, NotebookControllerAffinityExtended.Hidden);
+        controller.controller.updateNotebookAffinity(notebook, NotebookControllerAffinity2.Hidden);
     }
 
     private onDidOpenNotebookDocument(notebook: NotebookDocument) {

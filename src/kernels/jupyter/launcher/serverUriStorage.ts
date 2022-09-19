@@ -83,6 +83,15 @@ export class JupyterServerUriStorage implements IJupyterServerUriStorage, IServe
         // Compute server id for saving in the list
         const serverId = await computeServerId(uri);
 
+        // Check if we have already found a display name for this server
+        // IANHU: Not the right place for this?
+        const existingEntry = uriList.find((entry) => {
+            return entry.serverId === serverId;
+        });
+        if (existingEntry && existingEntry.displayName) {
+            displayName = existingEntry.displayName;
+        }
+
         // Remove this uri if already found (going to add again with a new time)
         const editedList = uriList.filter((f, i) => {
             return f.uri !== uri && i < Settings.JupyterServerUriListMax - 1;
