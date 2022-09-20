@@ -6,7 +6,7 @@ import { CancellationToken, Event, EventEmitter } from 'vscode';
 import { IDisposableRegistry, Resource } from '../platform/common/types';
 import { StopWatch } from '../platform/common/utils/stopWatch';
 import { traceInfoIfCI } from '../platform/logging';
-import { IContributedKernelFinder } from './internalTypes';
+import { IContributedKernelFinder, IContributedKernelFinderInfo } from './internalTypes';
 import { IKernelFinder, KernelConnectionMetadata } from './types';
 
 /**
@@ -27,6 +27,11 @@ export class KernelFinder implements IKernelFinder {
         this.disposables.push(finder.onDidChangeKernels(() => this._onDidChangeKernels.fire()));
     }
 
+    // Give the info for what kernel finders are currently registered
+    public getRegisteredKernelFinderInfo(): IContributedKernelFinderInfo[] {
+        return this._finders as IContributedKernelFinderInfo[];
+    }
+
     public async listKernels(
         resource: Resource,
         cancelToken: CancellationToken | undefined
@@ -43,7 +48,11 @@ export class KernelFinder implements IKernelFinder {
         const kernels: KernelConnectionMetadata[] = [];
 
         for (const finder of this._finders) {
-            const contributedKernels = finder.listContributedKernels(resource);
+            const contributedKernels = finder.listContributedKernels(resource).map((kernelConnection) => {
+                // For each connection, tack on the kernel finder info that discovered it
+                kernelConnection.kernelFinderInfo = { id: finder.id, displayName: finder.displayName };
+                return kernelConnection;
+            });
             kernels.push(...contributedKernels);
         }
 

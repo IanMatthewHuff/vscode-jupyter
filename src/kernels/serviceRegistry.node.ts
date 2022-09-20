@@ -17,7 +17,7 @@ import { KernelEnvironmentVariablesService } from './raw/launcher/kernelEnvVarsS
 import { KernelLauncher } from './raw/launcher/kernelLauncher.node';
 import { HostRawNotebookProvider } from './raw/session/hostRawNotebookProvider.node';
 import { RawNotebookSupportedService } from './raw/session/rawNotebookSupportedService.node';
-import { IKernelLauncher, IRawNotebookProvider, IRawNotebookSupportedService } from './raw/types';
+import { IKernelLauncher, ILocalKernelFinder, IRawNotebookProvider, IRawNotebookSupportedService } from './raw/types';
 import { JupyterVariables } from './variables/jupyterVariables';
 import { KernelVariables } from './variables/kernelVariables';
 import { PreWarmActivatedJupyterEnvironmentVariables } from './variables/preWarmVariables.node';
@@ -26,6 +26,7 @@ import {
     IKernelDependencyService,
     IKernelFinder,
     IKernelProvider,
+    IKernelSourceService,
     IStartupCodeProvider,
     IThirdPartyKernelProvider
 } from './types';
@@ -45,6 +46,7 @@ import { KernelAutoReconnectMonitor } from './kernelAutoReConnectMonitor';
 import { PythonKernelInterruptDaemon } from './raw/finder/pythonKernelInterruptDaemon.node';
 import { LocalKernelFinder } from './raw/finder/localKernelFinder.node';
 import { DebugStartupCodeProvider } from './debuggerStartupCodeProvider';
+import { KernelSourceService } from './kernelSource/kernelSourceService';
 
 export function registerTypes(serviceManager: IServiceManager, isDevMode: boolean) {
     serviceManager.addSingleton<IExtensionSingleActivationService>(IExtensionSingleActivationService, Activation);
@@ -68,10 +70,8 @@ export function registerTypes(serviceManager: IServiceManager, isDevMode: boolea
         KernelEnvironmentVariablesService
     );
     serviceManager.addSingleton<IKernelFinder>(IKernelFinder, KernelFinder);
-    serviceManager.addSingleton<IExtensionSingleActivationService>(
-        IExtensionSingleActivationService,
-        LocalKernelFinder
-    );
+    serviceManager.addSingleton<ILocalKernelFinder>(ILocalKernelFinder, LocalKernelFinder);
+    serviceManager.addBinding(ILocalKernelFinder, IExtensionSingleActivationService);
 
     serviceManager.addSingleton<JupyterPaths>(JupyterPaths, JupyterPaths);
     serviceManager.addSingleton<LocalKnownPathKernelSpecFinder>(
@@ -127,4 +127,7 @@ export function registerTypes(serviceManager: IServiceManager, isDevMode: boolea
     serviceManager.addSingleton<IStartupCodeProvider>(IStartupCodeProvider, KernelStartupCodeProvider);
     serviceManager.addSingleton<IStartupCodeProvider>(IStartupCodeProvider, DebugStartupCodeProvider);
     serviceManager.addSingleton<PythonKernelInterruptDaemon>(PythonKernelInterruptDaemon, PythonKernelInterruptDaemon);
+
+    // Kernel source service
+    serviceManager.addSingleton<IKernelSourceService>(IKernelSourceService, KernelSourceService);
 }

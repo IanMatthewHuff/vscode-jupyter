@@ -3,7 +3,7 @@
 
 'use strict';
 
-import { IExtensionSingleActivationService } from '../../platform/activation/types';
+import { IExtensionSingleActivationService, IExtensionSyncActivationService } from '../../platform/activation/types';
 import { IServiceManager } from '../../platform/ioc/types';
 import { ControllerDefaultService } from './controllerDefaultService';
 import { ControllerLoader } from './controllerLoader';
@@ -16,10 +16,14 @@ import {
     IControllerPreferredService,
     IControllerRegistration,
     IControllerSelection,
-    IKernelRankingHelper
+    IKernelRankingHelper,
+    INotebookKernelSourceSelector,
+    INotebookKernelSourceTracker
 } from './types';
 import { registerTypes as registerWidgetTypes } from './ipywidgets/serviceRegistry.node';
 import { KernelRankingHelper } from './kernelRanking/kernelRankingHelper';
+import { NotebookKernelSourceSelector } from './kernelSource/notebookKernelSourceSelector';
+import { NotebookKernelSourceTracker } from './kernelSource/notebookKernelSourceTracker';
 
 export function registerTypes(serviceManager: IServiceManager, isDevMode: boolean) {
     serviceManager.addSingleton<IKernelRankingHelper>(IKernelRankingHelper, KernelRankingHelper);
@@ -30,6 +34,15 @@ export function registerTypes(serviceManager: IServiceManager, isDevMode: boolea
     serviceManager.addSingleton<IControllerPreferredService>(IControllerPreferredService, ControllerPreferredService);
     serviceManager.addBinding(IControllerPreferredService, IExtensionSingleActivationService);
     serviceManager.addSingleton<IControllerSelection>(IControllerSelection, ControllerSelection);
+    serviceManager.addSingleton<INotebookKernelSourceSelector>(
+        INotebookKernelSourceSelector,
+        NotebookKernelSourceSelector
+    );
+    serviceManager.addSingleton<INotebookKernelSourceTracker>(
+        INotebookKernelSourceTracker,
+        NotebookKernelSourceTracker
+    );
+    serviceManager.addBinding(INotebookKernelSourceTracker, IExtensionSyncActivationService);
 
     registerWidgetTypes(serviceManager, isDevMode);
 }

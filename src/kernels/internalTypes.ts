@@ -9,7 +9,14 @@ import { KernelConnectionMetadata } from './types';
 
 export interface IContributedKernelFinder {
     kind: string;
+    id: string;
+    displayName: string;
     initialized: Promise<void>;
     onDidChangeKernels: Event<void>;
     listContributedKernels(resource: Resource): KernelConnectionMetadata[];
+}
+
+export interface IContributedKernelFinderInfo {
+    id: string;
+    displayName: string;
 }
