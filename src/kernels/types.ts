@@ -20,6 +20,7 @@ import { PythonEnvironment } from '../platform/pythonEnvironments/info';
 import { IAsyncDisposable, IDisplayOptions, Resource } from '../platform/common/types';
 import { IBackupFile, IJupyterKernel } from './jupyter/types';
 import { PythonEnvironment_PythonApi } from '../platform/api/types';
+import { IContributedKernelFinderInfo } from './internalTypes';
 
 export type WebSocketData = string | Buffer | ArrayBuffer | Buffer[];
 
@@ -94,7 +95,9 @@ export type PythonKernelConnectionMetadata = Readonly<{
  * This ensure we don't update is somewhere unnecessarily (such updates would be unexpected).
  * Unexpected as connections are defined once & not changed, if we need to change then user needs to create a new connection.
  */
-export type KernelConnectionMetadata = RemoteKernelConnectionMetadata | LocalKernelConnectionMetadata;
+export type KernelConnectionMetadata = (RemoteKernelConnectionMetadata | LocalKernelConnectionMetadata) & {
+    kernelFinderInfo?: IContributedKernelFinderInfo;
+};
 
 /**
  * Connection metadata for local kernels. Makes it easier to not have to check for the live connection type.
